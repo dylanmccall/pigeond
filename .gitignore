@@ -1,3 +1,6 @@
+/out
+/build
+
 # From https://github.com/github/gitignore/blob/master/C.gitignore
 
 # Prerequisites
@@ -51,6 +54,3 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-
-/out
-/build
