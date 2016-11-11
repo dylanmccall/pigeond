@@ -1,0 +1,7 @@
+{
+  "name": "pigeon-admin",
+  "version": "1.0.0",
+  "description": "Server to administer pigeond.",
+  "dependencies": {
+  }
+}

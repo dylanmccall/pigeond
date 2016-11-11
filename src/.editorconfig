@@ -1,0 +1,10 @@
+# Editor configuration for pigeond
+# @see http://editorconfig.org/
+
+[*.c]
+indent_style = tab
+indent_size = 4
+
+[*.h]
+indent_style = tab
+indent_size = 4

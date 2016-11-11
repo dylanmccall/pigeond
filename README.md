@@ -8,7 +8,7 @@ Created for CMPT 433, and based loosely on RFC 1149.
 
 Create a "pigeonN" network device using the tun/tap interface. Send and receive data over this device using the avian carrier link layer protocol. This should include a systemd unit file.
 
-### pigeonweb
+### pigeon-admin
 
 NodeJS-based web server that displays status information and provides some tools to manage pigeond.
 

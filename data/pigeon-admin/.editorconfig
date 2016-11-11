@@ -1,0 +1,14 @@
+# Editor configuration for pigeon-admin
+# @see http://editorconfig.org/
+
+[*.js]
+indent_style = tab
+indent_size = 4
+
+[*.html]
+indent_style = tab
+indent_size = 4
+
+[*.less]
+indent_style = tab
+indent_size = 4

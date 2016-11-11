@@ -1,0 +1,10 @@
+# Editor configuration for cmpt433-avian-ip
+# @see http://editorconfig.org/
+
+[Makefile]
+indent_style = tab
+indent_size = 4
+
+[Makefile.*]
+indent_style = tab
+indent_size = 4
