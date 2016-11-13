@@ -3,7 +3,10 @@ FLAVOURS := default armhf
 BINS := pigeond pigeon_admin
 
 OBJS_pigeond = \
-	pigeond/main.o
+	pigeond/main.o \
+	pigeond/command_runner.o \
+	pigeond/command_server.o \
+	pigeond/util.o
 
 DATA_DIRS_pigeon_admin = \
 	pigeon-admin
