@@ -8,10 +8,13 @@ Created for CMPT 433, and based loosely on RFC 1149.
 
 Create a "pigeonN" network device using the tun/tap interface. Send and receive data over this device using the avian carrier link layer protocol. This should include a systemd unit file.
 
-Currently we expect the network device to be configured outside our program. Once the program is running, run these commands, replacing "pigeon0" with the device that was created when the program started:
+Currently we work with a persistent network device with the hard-coded name "pigeon0". It is best to create and configure this device in advance:
 
+    ip tuntap add pigeon0 mode tun
     sudo ip link set pigeon0 up
     sudo ip addr add 10.0.0.1/24 dev pigeon0
+
+Finally, run pigeond and it will connect to the pigeon0 device.
 
 ### pigeon-admin
 
