@@ -1,0 +1,2 @@
+echo BB-UART5 > /sys/devices/platform/bone_capemgr/slots
+stty -F /dev/ttyO5 19200
