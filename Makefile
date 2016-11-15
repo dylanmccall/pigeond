@@ -4,8 +4,11 @@ BINS := pigeond pigeon_admin
 
 OBJS_pigeond = \
 	pigeond/main.o \
+	pigeond/beagle_joystick.o \
 	pigeond/command_runner.o \
 	pigeond/command_server.o \
+	pigeond/debounce.o \
+	pigeond/gpio.o \
 	pigeond/pigeon_tunnel.o \
 	pigeond/util.o
 
