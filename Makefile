@@ -6,6 +6,7 @@ OBJS_pigeond = \
 	pigeond/main.o \
 	pigeond/command_runner.o \
 	pigeond/command_server.o \
+	pigeond/pigeon_tunnel.o \
 	pigeond/util.o
 
 DATA_DIRS_pigeon_admin = \
