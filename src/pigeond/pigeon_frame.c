@@ -1,9 +1,10 @@
 #include "pigeon_frame.h"
 
-#include <stdio.h>
-#include <string.h>
+#include <arpa/inet.h>
 #include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 
 struct _PigeonFrame {
 	char *buffer;
@@ -59,7 +60,7 @@ void pigeon_frame_print_header(PigeonFrame *pigeon_frame) {
 	for (int i = 0; i < ETH_ALEN; i++) printf("%x ", header->ether_shost[i]);
 	printf("\n");
 
-	printf("Type: %x\n", (int)header->ether_type);
+	printf("Type: %x\n", ntohs(header->ether_type));
 
 	printf("Data: %d bytes\n", (int)data_size);
 }
