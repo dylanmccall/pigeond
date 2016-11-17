@@ -9,6 +9,7 @@ OBJS_pigeond = \
 	pigeond/command_server.o \
 	pigeond/debounce.o \
 	pigeond/gpio.o \
+	pigeond/pigeon_frame.o \
 	pigeond/pigeon_tunnel.o \
 	pigeond/util.o
 

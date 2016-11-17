@@ -37,7 +37,7 @@ PigeonTunnel *pigeon_tunnel_open(const char *dev_name) {
 
 	if (!error) {
 		int result;
-		ifr.ifr_flags = IFF_TUN | IFF_NO_PI;
+		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
 		strncpy(ifr.ifr_name, dev_name, IFNAMSIZ);
 		result = ioctl(tun_fd, TUNSETIFF, (void *) &ifr);
 		if (result < 0) {
@@ -97,11 +97,18 @@ const char *pigeon_tunnel_get_dev_name(PigeonTunnel *pigeon_tunnel) {
 	return pigeon_tunnel->dev_name;
 }
 
-int pigeon_tunnel_read(PigeonTunnel *pigeon_tunnel, char *out_buffer, size_t buffer_size) {
-	int result = read(pigeon_tunnel->tun_fd, out_buffer, buffer_size);
-	return result;
+PigeonFrame *pigeon_tunnel_read(PigeonTunnel *pigeon_tunnel) {
+	char buffer[ETHER_MAX_LEN] = {0};
+	size_t buffer_size = read(pigeon_tunnel->tun_fd, &buffer, sizeof(buffer));
+	if (buffer_size > 0 && buffer_size <= ETHER_MAX_LEN) {
+		return pigeon_frame_new(buffer, buffer_size);
+	} else {
+		perror("Error reading");
+		printf("Buffer size: %d, Is valid: %d, Min: %d\n", (int)buffer_size, ETHER_IS_VALID_LEN(buffer_size), ETHER_MIN_LEN);
+		return NULL;
+	}
 }
 
-int pigeon_tunnel_write(PigeonTunnel *pigeon_tunnel, char *value, size_t size) {
+int pigeon_tunnel_write(PigeonTunnel *pigeon_tunnel, PigeonFrame *pigeon_frame) {
 	return true;
 }

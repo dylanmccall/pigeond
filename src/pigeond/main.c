@@ -9,7 +9,6 @@
 #include "command_server.h"
 #include "pigeon_tunnel.h"
 
-#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -31,9 +30,9 @@ int main() {
 
 	if (pigeon_tunnel != NULL) {
 		const char *dev_name = pigeon_tunnel_get_dev_name(pigeon_tunnel);
-		printf("Created tunnel device %s\n", dev_name);
+		printf("Opened tunnel device %s\n", dev_name);
 	} else {
-		perror("Error creating tunnel device\n");
+		perror("Error opening tunnel device");
 	}
 
 	success &= command_server_start(command_server);
@@ -43,36 +42,17 @@ int main() {
 		// to the screen (with some simple heuristics to show strings).
 		char buffer[2048];
 		memset(buffer, 0, sizeof(buffer));
-		while(true) {
-			int result = pigeon_tunnel_read(pigeon_tunnel, buffer, sizeof(buffer));
-			if (result < 0) {
-				perror("Error reading from tun device");
-			} else {
-				printf("Read %d bytes from device:\n", result);
-				bool in_alnum = false;
-				for (int i = 0; i < result; i++) {
-					char value = buffer[i];
-					bool is_alnum = isalnum(value);
-
-					if (is_alnum != in_alnum) {
-						printf("\"");
-						if (!is_alnum) {
-							printf(" ");
-						}
-					}
-
-					if (is_alnum) {
-						printf("%c", value);
-					} else {
-						printf("%x ", buffer[i]);
-					}
-
-					in_alnum = is_alnum;
-				}
+		while(command_server_is_running(command_server)) {
+			PigeonFrame *pigeon_frame = pigeon_tunnel_read(pigeon_tunnel);
+			if (pigeon_frame != NULL) {
+				pigeon_frame_print_header(pigeon_frame);
+				pigeon_frame_print_data(pigeon_frame);
 				printf("\n");
+				pigeon_frame_free(pigeon_frame);
+			} else {
+				perror("Error reading from tunnel device");
 			}
 		}
-		// command_server_join(command_server);
 	};
 	command_runner = NULL;
 

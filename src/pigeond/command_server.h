@@ -28,6 +28,6 @@ bool command_server_start(CommandServer *command_server);
 bool command_server_wait(CommandServer *command_server);
 int command_server_join(CommandServer *command_server);
 bool command_server_stop(CommandServer *command_server);
-bool command_server_is_working(CommandServer *command_server);
+bool command_server_is_running(CommandServer *command_server);
 
 #endif

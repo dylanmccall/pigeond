@@ -117,7 +117,7 @@ bool command_server_stop(CommandServer *command_server) {
 	return !error;
 }
 
-bool command_server_is_working(CommandServer *command_server) {
+bool command_server_is_running(CommandServer *command_server) {
 	return command_server->thread != 0 && command_server->finished == false;
 }
 

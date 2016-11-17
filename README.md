@@ -10,7 +10,7 @@ Create a "pigeonN" network device using the tun/tap interface. Send and receive 
 
 Currently we work with a persistent network device with the hard-coded name "pigeon0". It is best to create and configure this device in advance:
 
-    ip tuntap add pigeon0 mode tun
+    sudo ip tuntap add pigeon0 mode tap
     sudo ip link set pigeon0 up
     sudo ip addr add 10.0.0.1/24 dev pigeon0
 
