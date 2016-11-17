@@ -10,6 +10,8 @@ struct _PigeonFrame {
 	int buffer_size;
 };
 
+size_t _find_string(const char *data, size_t offset, size_t data_size);
+
 PigeonFrame *pigeon_frame_new(const char *buffer, size_t buffer_size) {
 	PigeonFrame *pigeon_frame = malloc(sizeof(PigeonFrame));
 	memset(pigeon_frame, 0, sizeof(*pigeon_frame));
@@ -67,27 +69,49 @@ void pigeon_frame_print_data(PigeonFrame *pigeon_frame) {
 	size_t data_size = pigeon_frame_get_data(pigeon_frame, &data);
 
 	if (data_size > 0) {
-		bool in_alnum = false;
-		for (int i = 0; i < data_size; i++) {
-			char value = data[i];
-			bool is_alnum = isalnum(value);
+		size_t string_start = 0;
+		size_t string_end = 0;
 
-			if (is_alnum != in_alnum) {
-				if (is_alnum) {
-					printf("\"");
-				} else {
-					printf("\" ");
-				}
+		for (size_t i = 0; i < data_size; i++) {
+			char value = data[i];
+
+			if (i > string_end) {
+				string_end = _find_string(data, i, data_size);
+				string_start = (string_end > 0) ? i : 0;
 			}
 
-			if (is_alnum) {
-				printf("%c", value);
+			bool in_string = i >= string_start && i <= string_end;
+
+			if (in_string) {
+				if (i == string_start) printf("<");
+				if (isprint(value)) {
+					printf("%c", value);
+				} else {
+					printf(" ");
+				}
+				if (i == string_end) printf("> ");
 			} else {
 				printf("%x ", value);
 			}
-
-			in_alnum = is_alnum;
 		}
 		printf("\n");
 	}
+}
+
+size_t _find_string(const char *data, size_t offset, size_t data_size) {
+	assert(offset < data_size);
+	size_t line_end = 0;
+	for (size_t i = offset; i < data_size; i++) {
+		char value = data[i];
+		if (isprint(value)) {
+			line_end = 0;
+		} else if (i > offset && (value == '\r' || value == '\n')) {
+			line_end = i;
+		} else if (line_end > 0) {
+			break;
+		} else {
+			break;
+		}
+	}
+	return line_end;
 }
