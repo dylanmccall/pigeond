@@ -59,7 +59,6 @@ const CommandInfo COMMAND_NOT_FOUND = {
 	.command_fn = run_command_not_found
 };
 
-
 CommandRunner *command_runner_new() {
 	CommandRunner *command_runner = malloc(sizeof(CommandRunner));
 	memset(command_runner, 0, sizeof(*command_runner));

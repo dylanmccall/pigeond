@@ -6,12 +6,34 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <net/ethernet.h>
+
 struct _PigeonFrame {
 	char *buffer;
-	int buffer_size;
+	size_t buffer_size;
+	struct ether_header *header;
+	const char *data;
+	size_t data_size;
 };
 
+typedef struct {
+	unsigned ether_type;
+	const char *name;
+} EtherTypeInfo;
+
+const EtherTypeInfo ETHER_TYPE_INFO[] = {
+	{ETHERTYPE_IP, "IP"},
+	{ETHERTYPE_ARP, "ARP"},
+	{ETHERTYPE_IPX, "IPX"},
+	{ETHERTYPE_IPV6, "IPv6"},
+	{ETHERTYPE_LOOPBACK, "LOOPBACK"}
+};
+
+const size_t ETHER_TYPE_INFO_COUNT = sizeof(ETHER_TYPE_INFO) / sizeof(*ETHER_TYPE_INFO);
+
+const EtherTypeInfo *_pigeon_frame_get_ether_type_info(PigeonFrame *pigeon_frame);
 size_t _find_string(const char *data, size_t offset, size_t data_size);
+bool _eol_char(const char value);
 
 PigeonFrame *pigeon_frame_new(const char *buffer, size_t buffer_size) {
 	PigeonFrame *pigeon_frame = malloc(sizeof(PigeonFrame));
@@ -28,6 +50,16 @@ PigeonFrame *pigeon_frame_new(const char *buffer, size_t buffer_size) {
 
 	memcpy(pigeon_frame->buffer, buffer, buffer_size);
 
+	pigeon_frame->header = (struct ether_header *) pigeon_frame->buffer + 0;
+
+	if (pigeon_frame->buffer_size > ETHER_HDR_LEN) {
+		pigeon_frame->data = pigeon_frame->buffer + ETHER_HDR_LEN;
+		pigeon_frame->data_size = pigeon_frame->buffer_size - ETHER_HDR_LEN - 1;
+	} else {
+		pigeon_frame->data = NULL;
+		pigeon_frame->data_size = 0;
+	}
+
 	return pigeon_frame;
 }
 
@@ -36,58 +68,55 @@ void pigeon_frame_free(PigeonFrame *pigeon_frame) {
 	free(pigeon_frame);
 }
 
+size_t pigeon_frame_get_sockaddr(PigeonFrame *pigeon_frame, struct sockaddr *out_addr) {
+	return 0;
+}
+
 size_t pigeon_frame_get_data(PigeonFrame *pigeon_frame, const char **out_data) {
-	if (pigeon_frame->buffer_size > ETHER_HDR_LEN) {
-		*out_data = pigeon_frame->buffer + ETHER_HDR_LEN;
-		return pigeon_frame->buffer_size - ETHER_HDR_LEN;
-	} else {
-		return 0;
-	}
+	*out_data = pigeon_frame->data;
+	return pigeon_frame->buffer_size;
 }
 
 void pigeon_frame_print_header(PigeonFrame *pigeon_frame) {
-	struct ether_header *header;
-	const char *data;
-	size_t data_size;
-	header = (struct ether_header *) pigeon_frame->buffer + 0;
-	data_size = pigeon_frame_get_data(pigeon_frame, &data);
+	const EtherTypeInfo *ether_type_info = _pigeon_frame_get_ether_type_info(pigeon_frame);
 
 	printf("Destination: ");
-	for (int i = 0; i < ETH_ALEN; i++) printf("%x ", header->ether_dhost[i]);
+	for (int i = 0; i < ETH_ALEN; i++) printf("%x ", pigeon_frame->header->ether_dhost[i]);
 	printf("\n");
 
 	printf("Source: ");
-	for (int i = 0; i < ETH_ALEN; i++) printf("%x ", header->ether_shost[i]);
+	for (int i = 0; i < ETH_ALEN; i++) printf("%x ", pigeon_frame->header->ether_shost[i]);
 	printf("\n");
 
-	printf("Type: %x\n", ntohs(header->ether_type));
+	if (ether_type_info != NULL) {
+		printf("Type: %s\n", ether_type_info->name);
+	} else {
+		printf("Type: %x\n", ntohs(pigeon_frame->header->ether_type));
+	}
 
-	printf("Data: %d bytes\n", (int)data_size);
+	printf("Data: %lu bytes\n", (unsigned long)pigeon_frame->data_size);
 }
 
 void pigeon_frame_print_data(PigeonFrame *pigeon_frame) {
-	const char *data;
-	size_t data_size = pigeon_frame_get_data(pigeon_frame, &data);
-
-	if (data_size > 0) {
+	if (pigeon_frame->data_size > 0) {
 		size_t string_start = 0;
 		size_t string_end = 0;
 
-		for (size_t i = 0; i < data_size; i++) {
-			char value = data[i];
+		for (size_t i = 0; i < pigeon_frame->data_size; i++) {
+			char value = pigeon_frame->data[i];
 
 			if (i > string_end) {
-				string_end = _find_string(data, i, data_size);
+				string_end = _find_string(pigeon_frame->data, i, pigeon_frame->data_size);
 				string_start = (string_end > 0) ? i : 0;
 			}
 
-			bool in_string = i >= string_start && i <= string_end;
+			bool in_string = string_start != string_end && i >= string_start && i <= string_end;
 
 			if (in_string) {
 				if (i == string_start) printf("<");
 				if (isprint(value)) {
 					printf("%c", value);
-				} else {
+				} else if (value == '\n') {
 					printf(" ");
 				}
 				if (i == string_end) printf("> ");
@@ -99,6 +128,19 @@ void pigeon_frame_print_data(PigeonFrame *pigeon_frame) {
 	}
 }
 
+const EtherTypeInfo *_pigeon_frame_get_ether_type_info(PigeonFrame *pigeon_frame) {
+	unsigned ether_type = ntohs(pigeon_frame->header->ether_type);
+
+	for (size_t i = 0; i < ETHER_TYPE_INFO_COUNT; i++) {
+		const EtherTypeInfo *ether_type_info = &ETHER_TYPE_INFO[i];
+		if (ether_type_info->ether_type == ether_type) {
+			return ether_type_info;
+		}
+	}
+
+	return NULL;
+}
+
 size_t _find_string(const char *data, size_t offset, size_t data_size) {
 	assert(offset < data_size);
 	size_t line_end = 0;
@@ -106,7 +148,9 @@ size_t _find_string(const char *data, size_t offset, size_t data_size) {
 		char value = data[i];
 		if (isprint(value)) {
 			line_end = 0;
-		} else if (i > offset && (value == '\r' || value == '\n')) {
+		} else if (i > offset+3 && _eol_char(value)) {
+			// We mark a string ending if there have been more than three
+			// printable characters followed by an end of line.
 			line_end = i;
 		} else if (line_end > 0) {
 			break;
@@ -115,4 +159,8 @@ size_t _find_string(const char *data, size_t offset, size_t data_size) {
 		}
 	}
 	return line_end;
+}
+
+bool _eol_char(const char value) {
+	return value == '\r' || value == '\n';
 }

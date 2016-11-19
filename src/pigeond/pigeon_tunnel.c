@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <net/ethernet.h>
 #include <linux/if.h>
 #include <linux/if_tun.h>
 
@@ -24,8 +25,6 @@ PigeonTunnel *pigeon_tunnel_open(const char *dev_name) {
 	PigeonTunnel *pigeon_tunnel = NULL;
 	struct ifreq ifr;
 	int tun_fd;
-
-	memset(&ifr, 0, sizeof(ifr));
 
 	if (!error) {
 		tun_fd = open(CLONE_DEV, O_RDWR);

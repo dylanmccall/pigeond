@@ -10,8 +10,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <net/ethernet.h>
-
 typedef struct _PigeonFrame PigeonFrame;
 
 PigeonFrame *pigeon_frame_new(const char *buffer, size_t buffer_size);
