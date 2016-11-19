@@ -36,6 +36,8 @@ size_t _find_string(const char *data, size_t offset, size_t data_size);
 bool _eol_char(const char value);
 
 PigeonFrame *pigeon_frame_new(const char *buffer, size_t buffer_size) {
+	assert(buffer_size <= ETHER_MAX_LEN);
+
 	PigeonFrame *pigeon_frame = malloc(sizeof(PigeonFrame));
 	memset(pigeon_frame, 0, sizeof(*pigeon_frame));
 
@@ -68,13 +70,14 @@ void pigeon_frame_free(PigeonFrame *pigeon_frame) {
 	free(pigeon_frame);
 }
 
-size_t pigeon_frame_get_sockaddr(PigeonFrame *pigeon_frame, struct sockaddr *out_addr) {
-	return 0;
+size_t pigeon_frame_get_buffer(PigeonFrame *pigeon_frame, const char **out_buffer) {
+	*out_buffer = pigeon_frame->buffer;
+	return pigeon_frame->buffer_size;
 }
 
 size_t pigeon_frame_get_data(PigeonFrame *pigeon_frame, const char **out_data) {
 	*out_data = pigeon_frame->data;
-	return pigeon_frame->buffer_size;
+	return pigeon_frame->data_size;
 }
 
 void pigeon_frame_print_header(PigeonFrame *pigeon_frame) {
