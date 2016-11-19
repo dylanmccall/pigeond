@@ -12,13 +12,14 @@ struct _CommandServer {
 	pthread_mutex_t thread_mutex;
 	pthread_mutex_t thread_started_mutex;
 	pthread_cond_t thread_started;
-	int server_fd;
-	CommandRunner *command_runner;
 	volatile bool thread_stop;
 	volatile bool finished;
+	int server_fd;
+	CommandRunner *command_runner;
 };
 
 void *_command_server_thread(void *arg);
+int _get_tokens(char *command, char **tokens, int buffer_size);
 
 CommandServer *command_server_new(CommandRunner *command_runner) {
 	CommandServer *command_server = malloc(sizeof(CommandServer));
@@ -121,25 +122,6 @@ bool command_server_is_running(CommandServer *command_server) {
 	return command_server->thread != 0 && command_server->finished == false;
 }
 
-int get_tokens(char *command, char **tokens, int buffer_size) {
-	int count = 0;
-
-	char *token;
-	char *saveptr;
-
-	token = strtok_r(command, " \t\n", &saveptr);
-	tokens[count] = token;
-	count++;
-
-	while (token != NULL && count < buffer_size) {
-		token = strtok_r(NULL, " \t\n", &saveptr);
-		tokens[count] = token;
-		count++;
-	}
-
-	return count;
-}
-
 void *_command_server_thread(void *arg) {
 	CommandServer *command_server = (CommandServer *)arg;
 
@@ -165,7 +147,7 @@ void *_command_server_thread(void *arg) {
 		}
 
 		char *tokens[32];
-		int tokens_count = get_tokens(receive_buffer, (char **) &tokens, 32);
+		int tokens_count = _get_tokens(receive_buffer, (char **) &tokens, 32);
 
 		size_t response_size;
 		CommandResult command_result = command_runner_run(
@@ -197,4 +179,23 @@ void *_command_server_thread(void *arg) {
 	command_server->finished = true;
 
 	return NULL;
+}
+
+int _get_tokens(char *command, char **tokens, int buffer_size) {
+	int count = 0;
+
+	char *token;
+	char *saveptr;
+
+	token = strtok_r(command, " \t\n", &saveptr);
+	tokens[count] = token;
+	count++;
+
+	while (token != NULL && count < buffer_size) {
+		token = strtok_r(NULL, " \t\n", &saveptr);
+		tokens[count] = token;
+		count++;
+	}
+
+	return count;
 }

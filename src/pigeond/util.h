@@ -15,8 +15,8 @@
 
 #define MINUTES_IN_SECONDS 60
 #define SECONDS_IN_MILLISECONDS 1000
-#define NANOSECONDS_IN_MILLISECONDS 1000000
-#define NANOSECONDS_IN_SECONDS 1000000000
+#define MILLISECONDS_IN_NANOSECONDS 1000000
+#define SECONDS_IN_NANOSECONDS 1000000000
 
 int timespec_to_milliseconds(struct timespec *time);
 int milliseconds_to_timespec(int milliseconds, struct timespec *out_timespec);

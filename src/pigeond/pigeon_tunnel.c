@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <arpa/inet.h>
 #include <net/ethernet.h>
 #include <linux/if.h>
 #include <linux/if_tun.h>
@@ -20,11 +21,20 @@ struct _PigeonTunnel {
 	char dev_name[IFNAMSIZ];
 };
 
-PigeonTunnel *pigeon_tunnel_open(const char *dev_name) {
+PigeonTunnel *pigeon_tunnel_open(const char *dev_name_template) {
 	bool error = false;
 	PigeonTunnel *pigeon_tunnel = NULL;
-	struct ifreq ifr;
 	int tun_fd;
+	struct ifreq ifr = {0};
+
+	if (!error) {
+		pigeon_tunnel = malloc(sizeof(PigeonTunnel));
+		if (pigeon_tunnel != NULL) {
+			memset(pigeon_tunnel, 0, sizeof(*pigeon_tunnel));
+		} else {
+			error = true;
+		}
+	}
 
 	if (!error) {
 		tun_fd = open(CLONE_DEV, O_RDWR);
@@ -35,35 +45,17 @@ PigeonTunnel *pigeon_tunnel_open(const char *dev_name) {
 	}
 
 	if (!error) {
-		int result;
+		strncpy(ifr.ifr_name, dev_name_template, IFNAMSIZ);
 		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
-		strncpy(ifr.ifr_name, dev_name, IFNAMSIZ);
-		result = ioctl(tun_fd, TUNSETIFF, (void *) &ifr);
-		if (result < 0) {
+		if (ioctl(tun_fd, TUNSETIFF, (void *) &ifr) < 0) {
 			error = true;
 		}
 	}
 
 	if (!error) {
-		int result;
-		result = ioctl(tun_fd, TUNSETPERSIST, 1);
-		if (result < 0) {
-			error = true;
-		}
-	}
-
-	if (!error) {
-		pigeon_tunnel = malloc(sizeof(PigeonTunnel));
-		if (pigeon_tunnel == NULL) {
-			error = true;
-		}
-	}
-
-	if (!error) {
-		memset(pigeon_tunnel, 0, sizeof(*pigeon_tunnel));
 		pigeon_tunnel->tun_fd = tun_fd;
-		strcpy(pigeon_tunnel->dev_name, ifr.ifr_name);
-	} else {
+		strncpy(pigeon_tunnel->dev_name, ifr.ifr_name, IFNAMSIZ);
+	} else if (pigeon_tunnel != NULL) {
 		close(tun_fd);
 		free(pigeon_tunnel);
 		pigeon_tunnel = NULL;
@@ -96,8 +88,61 @@ const char *pigeon_tunnel_get_dev_name(PigeonTunnel *pigeon_tunnel) {
 	return pigeon_tunnel->dev_name;
 }
 
+bool pigeon_tunnel_set_mtu(PigeonTunnel *pigeon_tunnel, int mtu) {
+	bool error = false;
+	int socket_fd;
+	struct ifreq ifr = {0};
+
+	if (!error) {
+		socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+		if (socket_fd < 0) {
+			error = true;
+		}
+	}
+
+	if (!error) {
+		strncpy(ifr.ifr_name, pigeon_tunnel->dev_name, IFNAMSIZ);
+		ifr.ifr_addr.sa_family = AF_INET;
+		ifr.ifr_mtu = mtu;
+		if (ioctl(socket_fd, SIOCSIFMTU, (void *) &ifr) < 0) {
+			error = true;
+		}
+	}
+
+	return !error;
+}
+
+int pigeon_tunnel_get_mtu(PigeonTunnel *pigeon_tunnel) {
+	bool error = false;
+	int socket_fd;
+	struct ifreq ifr = {0};
+
+	if (!error) {
+		socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+		if (socket_fd < 0) {
+			error = true;
+		}
+	}
+
+	if (!error) {
+		strncpy(ifr.ifr_name, pigeon_tunnel->dev_name, IFNAMSIZ);
+		ifr.ifr_addr.sa_family = AF_INET;
+		if (ioctl(socket_fd, SIOCGIFMTU, (void *) &ifr) < 0) {
+			error = true;
+		}
+	}
+
+	if (!error) {
+		return ifr.ifr_mtu;
+	} else {
+		return -1;
+	}
+}
+
 PigeonFrame *pigeon_tunnel_read(PigeonTunnel *pigeon_tunnel) {
 	PigeonFrame *pigeon_frame;
+	// FIXME: It would be better to use the MTU for the buffer size here, but
+	// pigeon_tunnel_get_mtu is very inefficient.
 	char buffer[ETHER_MAX_LEN] = {0};
 	size_t bytes_read = read(pigeon_tunnel->tun_fd, &buffer, sizeof(buffer));
 
@@ -106,7 +151,7 @@ PigeonFrame *pigeon_tunnel_read(PigeonTunnel *pigeon_tunnel) {
 		pigeon_frame = NULL;
 	} else if (bytes_read > ETHER_MAX_LEN) {
 		fprintf(stderr, "Dropping oversized frame");
-		fprintf(stderr, "Packet is %lu bytes. Expected <= %d bytes.\n", (unsigned long)bytes_read, ETHER_MAX_LEN);
+		fprintf(stderr, "Frame is %lu bytes. Expected <= %d bytes.\n", (unsigned long)bytes_read, ETHER_MAX_LEN);
 		pigeon_frame = NULL;
 		// We don't worry about undersized packets. Those will be padded automatically.
 	} else {

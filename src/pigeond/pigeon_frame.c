@@ -36,8 +36,6 @@ size_t _find_string(const char *data, size_t offset, size_t data_size);
 bool _eol_char(const char value);
 
 PigeonFrame *pigeon_frame_new(const char *buffer, size_t buffer_size) {
-	assert(buffer_size <= ETHER_MAX_LEN);
-
 	PigeonFrame *pigeon_frame = malloc(sizeof(PigeonFrame));
 	memset(pigeon_frame, 0, sizeof(*pigeon_frame));
 

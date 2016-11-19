@@ -14,9 +14,11 @@
 
 typedef struct _PigeonTunnel PigeonTunnel;
 
-PigeonTunnel *pigeon_tunnel_open();
+PigeonTunnel *pigeon_tunnel_open(const char *dev_name_template);
 bool pigeon_tunnel_close(PigeonTunnel *pigeon_tunnel);
 const char *pigeon_tunnel_get_dev_name(PigeonTunnel *pigeon_tunnel);
+bool pigeon_tunnel_set_mtu(PigeonTunnel *pigeon_tunnel, int mtu);
+int pigeon_tunnel_get_mtu(PigeonTunnel *pigeon_tunnel);
 PigeonFrame *pigeon_tunnel_read(PigeonTunnel *pigeon_tunnel);
 int pigeon_tunnel_write(PigeonTunnel *pigeon_tunnel, PigeonFrame *pigeon_frame);
 
