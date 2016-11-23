@@ -16,7 +16,7 @@ typedef enum {
     COMMAND_SUCCESS_STOP,
     COMMAND_RESPONSE_TOO_LARGE,
     COMMAND_ERROR,
-    COMMAND_NOT_IMPLEMENTED,
+    COMMAND_NOT_IMPLEMENTED
 } CommandResult;
 
 typedef struct _CommandRunner CommandRunner;
