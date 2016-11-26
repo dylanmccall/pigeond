@@ -30,19 +30,22 @@ const PigeonLinkmodInfo LINKMODS_TX[] = {
 		.type = LINKMOD_TYPE_TX,
 		.name = "print-tx",
 		.is_available_fn = NULL,
-		.new_thread_fn = NULL
+		.new_fn = NULL,
+		.free_fn = NULL
 	},
 	{
 		.type = LINKMOD_TYPE_TX,
 		.name = "file-tx",
 		.is_available_fn = NULL,
-		.new_thread_fn = NULL
+		.new_fn = NULL,
+		.free_fn = NULL
 	},
 	{
 		.type = LINKMOD_TYPE_TX,
 		.name = "console-tx",
 		.is_available_fn = linkmod_console_tx_is_available,
-		.new_thread_fn = linkmod_console_tx_new_thread
+		.new_fn = linkmod_console_tx_new,
+		.free_fn = linkmod_console_tx_free
 	}
 };
 
@@ -53,19 +56,22 @@ const PigeonLinkmodInfo LINKMODS_RX[] = {
 		.type = LINKMOD_TYPE_RX,
 		.name = "scan-rx",
 		.is_available_fn = NULL,
-		.new_thread_fn = NULL
+		.new_fn = NULL,
+		.free_fn = NULL
 	},
 	{
 		.type = LINKMOD_TYPE_RX,
 		.name = "file-rx",
 		.is_available_fn = NULL,
-		.new_thread_fn = NULL
+		.new_fn = NULL,
+		.free_fn = NULL
 	},
 	{
 		.type = LINKMOD_TYPE_RX,
 		.name = "console-rx",
 		.is_available_fn = linkmod_console_rx_is_available,
-		.new_thread_fn = linkmod_console_rx_new_thread
+		.new_fn = linkmod_console_rx_new,
+		.free_fn = linkmod_console_rx_free
 	}
 };
 

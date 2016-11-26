@@ -13,9 +13,11 @@
 #include <stdlib.h>
 
 bool linkmod_console_tx_is_available();
-LongThread *linkmod_console_tx_new_thread(PigeonLink *pigeon_link);
+PigeonLinkmod *linkmod_console_tx_new();
+void linkmod_console_tx_free(PigeonLinkmod *linkmod);
 
 bool linkmod_console_rx_is_available();
-LongThread *linkmod_console_rx_new_thread(PigeonLink *pigeon_link);
+PigeonLinkmod *linkmod_console_rx_new();
+void linkmod_console_rx_free(PigeonLinkmod *linkmod);
 
 #endif

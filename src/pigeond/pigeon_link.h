@@ -31,10 +31,14 @@ void pigeon_link_print_debug_info(PigeonLink *pigeon_link);
 
 bool pigeon_link_tx_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame);
 size_t pigeon_link_tx_count(PigeonLink *pigeon_link);
+// Get the next frame to send. The caller is now the owner of the frame and
+// must call pigeon_frame_free when finished.
 PigeonFrame *pigeon_link_tx_pop(PigeonLink *pigeon_link);
 
 bool pigeon_link_rx_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame);
 size_t pigeon_link_rx_count(PigeonLink *pigeon_link);
+// Get the next frame received. The caller is now the owner of the frame and
+// must call pigeon_frame_free when finished.
 PigeonFrame *pigeon_link_rx_pop(PigeonLink *pigeon_link);
 
 #endif
