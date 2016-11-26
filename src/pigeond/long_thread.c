@@ -22,6 +22,9 @@ LongThread *long_thread_new(LongThreadOptions options) {
 	pthread_mutex_init(&long_thread->thread_mutex, NULL);
 	pthread_mutex_init(&long_thread->thread_started_mutex, NULL);
 	pthread_cond_init(&long_thread->thread_started, NULL);
+	if (long_thread->options.new_fn != NULL) {
+		long_thread->options.new_fn(long_thread, long_thread->options.data);
+	}
 	return long_thread;
 }
 
@@ -29,6 +32,9 @@ void *_long_thread_thread_fn(void *arg);
 LongThreadResult _long_thread_null_loop_fn(LongThread *, void *);
 
 void long_thread_free(LongThread *long_thread) {
+	if (long_thread->options.free_fn != NULL) {
+		long_thread->options.free_fn(long_thread, long_thread->options.data);
+	}
 	free(long_thread);
 }
 

@@ -157,25 +157,35 @@ void pigeon_link_print_debug_info(PigeonLink *pigeon_link) {
 }
 
 bool pigeon_link_tx_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame) {
+	// Add frame to fifo buffer or pipe. Non-blocking.
+	// Called by PigeonTunnel, on read.
 	return false;
 }
 
 size_t pigeon_link_tx_count(PigeonLink *pigeon_link) {
+	// Count frames in fifo buffer or pipe.
 	return 0;
 }
 
 PigeonFrame *pigeon_link_tx_pop(PigeonLink *pigeon_link) {
+	// Pop the next frame from fifo buffer or pipe. Blocking.
+	// Called by Linkmod (TX), on send.
 	return NULL;
 }
 
 bool pigeon_link_rx_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame) {
+	// Add frame to fifo bffer or pipe. Non-blocking.
+	// Called by Linkmod (RX), on read.
 	return false;
 }
 
 size_t pigeon_link_rx_count(PigeonLink *pigeon_link) {
+	// Count frames in fifo buffer or pipe.
 	return 0;
 }
 
 PigeonFrame *pigeon_link_rx_pop(PigeonLink *pigeon_link) {
+	// Pop the next frame from fifo buffer or pipe. Blocking.
+	// Called by PigeonTunnel, on write.
 	return NULL;
 }

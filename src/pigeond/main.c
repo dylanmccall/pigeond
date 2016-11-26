@@ -24,52 +24,63 @@ int main() {
 	CommandRunner *command_runner = NULL;
 	CommandServer *command_server = NULL;
 	PigeonTunnel *pigeon_tunnel = NULL;
-	bool success = true;
+	bool error = false;
 
 	pigeon_link = pigeon_link_new();
 	command_runner = command_runner_new();
 	command_server = command_server_new(command_runner);
 
-	pigeon_tunnel = pigeon_tunnel_open(PIGEON_TUNNEL_NAME);
-
-	if (success && pigeon_tunnel == NULL) {
-		success = false;
-		perror("Error opening tunnel device");
-	} else {
-		const char *dev_name = pigeon_tunnel_get_dev_name(pigeon_tunnel);
-		printf("Opened tunnel device %s\n", dev_name);
+	if (!error) {
+		pigeon_tunnel = pigeon_tunnel_open(PIGEON_TUNNEL_NAME);
+		if (pigeon_tunnel == NULL) {
+			perror("Error opening tunnel device");
+			error = true;
+		} else {
+			const char *dev_name = pigeon_tunnel_get_dev_name(pigeon_tunnel);
+			printf("Opened tunnel device %s\n", dev_name);
+		}
 	}
 
-	if (success && !pigeon_link_init(pigeon_link)) {
-		success = false;
-		printf("Error initializing pigeon link\n");
-	}
-
-	pigeon_link_print_debug_info(pigeon_link);
-
-	if (success && !pigeon_link_start(pigeon_link)) {
-		success = false;
-		printf("Error starting pigeon link\n");
-	}
-
-	if (success && !command_server_start(command_server)) {
-		success = false;
-		printf("Error starting command server\n");
-	}
-
-	if (success) {
-		// Very ugly placeholder code to read from the device and dump results
-		// to the screen (with some simple heuristics to show strings).
-
-		if (!pigeon_tunnel_set_mtu(pigeon_tunnel, PIGEON_LINK_MTU)) {
-			perror("Error setting MTU");
+	if (!error) {
+		if (!pigeon_link_init(pigeon_link)) {
+			printf("Error initializing pigeon link\n");
+			error = true;
 		}
 
-		// TODO: Enable seccomp here.
-		// TODO: Avoid processing any data until this point. We will need to
-		//       detach hardware init from thread start in the PigeonLink and
-		//       PigeonTunnel modules.
+		pigeon_link_print_debug_info(pigeon_link);
+	}
 
+	if (!error) {
+		if (!command_server_start(command_server)) {
+			printf("Error starting command server\n");
+			error = true;
+		}
+	}
+
+	if (!error) {
+		if (!pigeon_tunnel_set_mtu(pigeon_tunnel, PIGEON_LINK_MTU)) {
+			perror("Error setting MTU");
+			error = true;
+		} else {
+			printf("Set MTU to %d\n", PIGEON_LINK_MTU);
+		}
+	}
+
+	// TODO: Enable seccomp here. It is important this happens before we
+	//       process data.
+	// TODO: We should have separate init and start for command_server and
+	//       pigeon_tunnel, so they don't run until after seccomp is enabled.
+
+	if (!error) {
+		if (!pigeon_link_start(pigeon_link)) {
+			printf("Error starting pigeon link\n");
+			error = true;
+		}
+	}
+
+	if (!error) {
+		// Very ugly placeholder code to read from the device and dump results
+		// to the screen.
 		char buffer[2048];
 		memset(buffer, 0, sizeof(buffer));
 		while(command_server_is_running(command_server)) {
