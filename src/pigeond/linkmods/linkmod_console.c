@@ -4,6 +4,15 @@
 #include <string.h>
 
 /**
+ * A linkmod porovides an abstract interface for our modem to send and receive
+ * data. This is necessary because the same data can be carried over a variety
+ * of mediums. Linkmods are specified, in order, in pigeon_linkmods__list.h.
+ * Every linkmod can be either a transmit (TX) or receive (RX) module. It has
+ * a name, a function that says whether it should be used (is_available_fn), a
+ * constructor (new_fn), and a destructor (free_fn).
+ */
+
+/**
  * Data used in this module, as well as public data that is shared with the
  * rest of the application. Every linkmod should create a struct with a
  * PigeonLinkmod as its first parameter.
