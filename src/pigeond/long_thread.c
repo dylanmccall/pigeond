@@ -26,6 +26,7 @@ LongThread *long_thread_new(LongThreadOptions options) {
 }
 
 void *_long_thread_thread_fn(void *arg);
+LongThreadResult _long_thread_null_loop_fn(LongThread *, void *);
 
 void long_thread_free(LongThread *long_thread) {
 	free(long_thread);
@@ -40,7 +41,9 @@ bool long_thread_start(LongThread *long_thread) {
 			error = true;
 		}
 
-		error = !error && !long_thread->options.start_fn(long_thread, long_thread->options.data);
+		if (long_thread->options.start_fn != NULL) {
+			error = !error && !long_thread->options.start_fn(long_thread, long_thread->options.data);
+		}
 
 		if (!error) {
 			long_thread->thread_stop = false;
@@ -81,7 +84,9 @@ bool long_thread_stop(LongThread *long_thread) {
 			}
 		}
 
-		error = !error && !long_thread->options.stop_fn(long_thread, long_thread->options.data);
+		if (long_thread->options.stop_fn != NULL) {
+			error = !error && !long_thread->options.stop_fn(long_thread, long_thread->options.data);
+		}
 
 		if (!error) {
 			long_thread->thread = 0;
@@ -99,7 +104,12 @@ bool long_thread_is_running(LongThread *long_thread) {
 void *_long_thread_thread_fn(void *arg) {
 	LongThread *long_thread = (LongThread *)arg;
 
-	long_thread_loop_t loop_fn = long_thread->options.loop_fn;
+	long_thread_loop_t loop_fn;
+	if (long_thread->options.loop_fn != NULL) {
+		loop_fn = long_thread->options.loop_fn;
+	} else {
+		loop_fn = _long_thread_null_loop_fn;
+	}
 
 	pthread_cond_signal(&long_thread->thread_started);
 
@@ -113,4 +123,8 @@ void *_long_thread_thread_fn(void *arg) {
 	long_thread->finished = true;
 
 	return NULL;
+}
+
+LongThreadResult _long_thread_null_loop_fn(LongThread *long_thread, void *data) {
+	return LONG_THREAD_STOP;
 }

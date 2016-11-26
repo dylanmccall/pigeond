@@ -7,8 +7,8 @@
 
 #include "command_runner.h"
 #include "command_server.h"
+#include "pigeon_link.h"
 #include "pigeon_tunnel.h"
-#include "pigeon_transmit.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -20,36 +20,55 @@
 #define PIGEON_TUNNEL_NAME "pigeon0"
 
 int main() {
-	PigeonTransmit *pigeon_transmit = NULL;
+	PigeonLink *pigeon_link = NULL;
 	CommandRunner *command_runner = NULL;
 	CommandServer *command_server = NULL;
 	PigeonTunnel *pigeon_tunnel = NULL;
 	bool success = true;
 
-	pigeon_transmit = pigeon_transmit_new();
+	pigeon_link = pigeon_link_new();
 	command_runner = command_runner_new();
 	command_server = command_server_new(command_runner);
 
 	pigeon_tunnel = pigeon_tunnel_open(PIGEON_TUNNEL_NAME);
 
-	if (pigeon_tunnel != NULL) {
+	if (success && pigeon_tunnel == NULL) {
+		success = false;
+		perror("Error opening tunnel device");
+	} else {
 		const char *dev_name = pigeon_tunnel_get_dev_name(pigeon_tunnel);
 		printf("Opened tunnel device %s\n", dev_name);
-	} else {
-		perror("Error opening tunnel device");
-		success = false;
 	}
 
-	success &= pigeon_transmit_start(pigeon_transmit);
-	success &= command_server_start(command_server);
+	if (success && !pigeon_link_init(pigeon_link)) {
+		success = false;
+		printf("Error initializing pigeon link\n");
+	}
+
+	pigeon_link_print_debug_info(pigeon_link);
+
+	if (success && !pigeon_link_start(pigeon_link)) {
+		success = false;
+		printf("Error starting pigeon link\n");
+	}
+
+	if (success && !command_server_start(command_server)) {
+		success = false;
+		printf("Error starting command server\n");
+	}
 
 	if (success) {
 		// Very ugly placeholder code to read from the device and dump results
 		// to the screen (with some simple heuristics to show strings).
 
-		if (!pigeon_tunnel_set_mtu(pigeon_tunnel, PIGEON_TRANSMIT_MTU)) {
+		if (!pigeon_tunnel_set_mtu(pigeon_tunnel, PIGEON_LINK_MTU)) {
 			perror("Error setting MTU");
 		}
+
+		// TODO: Enable seccomp here.
+		// TODO: Avoid processing any data until this point. We will need to
+		//       detach hardware init from thread start in the PigeonLink and
+		//       PigeonTunnel modules.
 
 		char buffer[2048];
 		memset(buffer, 0, sizeof(buffer));
@@ -70,7 +89,7 @@ int main() {
 	printf("Exiting…\n");
 
 	command_server_stop(command_server);
-	pigeon_transmit_stop(pigeon_transmit);
+	pigeon_link_stop(pigeon_link);
 
 	pigeon_tunnel_close(pigeon_tunnel);
 	pigeon_tunnel = NULL;
@@ -81,8 +100,8 @@ int main() {
 	command_runner_free(command_runner);
 	command_runner = NULL;
 
-	pigeon_transmit_free(pigeon_transmit);
-	pigeon_transmit = NULL;
+	pigeon_link_free(pigeon_link);
+	pigeon_link = NULL;
 
 	return 0;
 }

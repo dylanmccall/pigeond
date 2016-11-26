@@ -9,9 +9,11 @@ OBJS_pigeond = \
 	pigeond/command_server.o \
 	pigeond/debounce.o \
 	pigeond/gpio.o \
+	pigeond/linkmods/linkmod_console.o \
 	pigeond/long_thread.o \
 	pigeond/pigeon_frame.o \
-	pigeond/pigeon_transmit.o \
+	pigeond/pigeon_link.o \
+	pigeond/pigeon_linkmod.o \
 	pigeond/pigeon_tunnel.o \
 	pigeond/util.o
 
