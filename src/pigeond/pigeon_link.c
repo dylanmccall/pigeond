@@ -8,21 +8,17 @@
 #include <string.h>
 
 struct _PigeonLink {
-	PigeonFrame *tx_buffer[PIGEON_RX_BUFFER_SIZE];
-	PigeonFrame *rx_buffer[PIGEON_RX_BUFFER_SIZE];
+	PigeonFramePipeHandle frame_pipe_ref_rx;
 	PigeonLinkmod *linkmod_tx;
 	PigeonLinkmod *linkmod_rx;
-	pthread_mutex_t tx_mutex;
-	pthread_mutex_t rx_mutex;
 };
 
 void *_pigeon_link_thread(void *arg);
 
-PigeonLink *pigeon_link_new() {
+PigeonLink *pigeon_link_new(PigeonFramePipeHandle frame_pipe_ref_rx) {
 	PigeonLink *pigeon_link = malloc(sizeof(PigeonLink));
+	pigeon_link->frame_pipe_ref_rx = frame_pipe_ref_rx;
 	memset(pigeon_link, 0, sizeof(*pigeon_link));
-	pthread_mutex_init(&pigeon_link->tx_mutex, NULL);
-	pthread_mutex_init(&pigeon_link->rx_mutex, NULL);
 	return pigeon_link;
 }
 
@@ -65,21 +61,21 @@ bool pigeon_link_start(PigeonLink *pigeon_link) {
 }
 
 bool pigeon_link_wait(PigeonLink *pigeon_link) {
-	bool tx_success, rx_success;
+	bool tx_error, rx_error;
 
 	if (pigeon_link->linkmod_tx) {
-		tx_success = pigeon_linkmod_wait(pigeon_link->linkmod_tx);
+		tx_error = pigeon_linkmod_wait(pigeon_link->linkmod_tx);
 	} else {
-		tx_success = true;
+		tx_error = false;
 	}
 
 	if (pigeon_link->linkmod_rx) {
-		rx_success = pigeon_linkmod_wait(pigeon_link->linkmod_rx);
+		rx_error = pigeon_linkmod_wait(pigeon_link->linkmod_rx);
 	} else {
-		rx_success = true;
+		rx_error = false;
 	}
 
-	return tx_success && rx_success;
+	return !tx_error && !rx_error;
 }
 
 int pigeon_link_join(PigeonLink *pigeon_link) {
@@ -101,21 +97,21 @@ int pigeon_link_join(PigeonLink *pigeon_link) {
 }
 
 bool pigeon_link_stop(PigeonLink *pigeon_link) {
-	bool tx_success, rx_success;
+	bool tx_error, rx_error;
 
 	if (pigeon_link->linkmod_tx) {
-		tx_success = pigeon_linkmod_stop(pigeon_link->linkmod_tx);
+		tx_error = pigeon_linkmod_stop(pigeon_link->linkmod_tx);
 	} else {
-		tx_success = true;
+		tx_error = false;
 	}
 
 	if (pigeon_link->linkmod_rx) {
-		rx_success = pigeon_linkmod_stop(pigeon_link->linkmod_rx);
+		rx_error = pigeon_linkmod_stop(pigeon_link->linkmod_rx);
 	} else {
-		rx_success = true;
+		rx_error = false;
 	}
 
-	return tx_success && rx_success;
+	return !tx_error && !rx_error;
 }
 
 bool pigeon_link_is_running(PigeonLink *pigeon_link) {
@@ -156,36 +152,14 @@ void pigeon_link_print_debug_info(PigeonLink *pigeon_link) {
 	printf("RX link module: %s\n", rx_name);
 }
 
-bool pigeon_link_tx_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame) {
-	// Add frame to fifo buffer or pipe. Non-blocking.
-	// Called by PigeonTunnel, on read.
-	return false;
+PigeonFrame *pigeon_link_frames_pop(PigeonLink *pigeon_link) {
+	return pigeon_frame_pipe_pop(pigeon_link->frame_pipe_ref_rx);
 }
 
-size_t pigeon_link_tx_count(PigeonLink *pigeon_link) {
-	// Count frames in fifo buffer or pipe.
-	return 0;
+bool pigeon_link_frames_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame) {
+	return pigeon_frame_pipe_push(pigeon_link->frame_pipe_ref_rx, pigeon_frame);
 }
 
-PigeonFrame *pigeon_link_tx_pop(PigeonLink *pigeon_link) {
-	// Pop the next frame from fifo buffer or pipe. Blocking.
-	// Called by Linkmod (TX), on send.
-	return NULL;
-}
-
-bool pigeon_link_rx_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame) {
-	// Add frame to fifo bffer or pipe. Non-blocking.
-	// Called by Linkmod (RX), on read.
-	return false;
-}
-
-size_t pigeon_link_rx_count(PigeonLink *pigeon_link) {
-	// Count frames in fifo buffer or pipe.
-	return 0;
-}
-
-PigeonFrame *pigeon_link_rx_pop(PigeonLink *pigeon_link) {
-	// Pop the next frame from fifo buffer or pipe. Blocking.
-	// Called by PigeonTunnel, on write.
-	return NULL;
+size_t pigeon_link_frames_count(PigeonLink *pigeon_link) {
+	return pigeon_frame_pipe_count(pigeon_link->frame_pipe_ref_rx);
 }

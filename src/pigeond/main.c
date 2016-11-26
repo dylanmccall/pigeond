@@ -7,6 +7,7 @@
 
 #include "command_runner.h"
 #include "command_server.h"
+#include "pigeon_frame_pipe.h"
 #include "pigeon_link.h"
 #include "pigeon_tunnel.h"
 
@@ -20,20 +21,31 @@
 #define PIGEON_TUNNEL_NAME "pigeon0"
 
 int main() {
+	PigeonFramePipe *pigeon_frame_pipe = NULL;
+	PigeonTunnel *pigeon_tunnel = NULL;
 	PigeonLink *pigeon_link = NULL;
 	CommandRunner *command_runner = NULL;
 	CommandServer *command_server = NULL;
-	PigeonTunnel *pigeon_tunnel = NULL;
 	bool error = false;
 
-	pigeon_link = pigeon_link_new();
+	pigeon_frame_pipe = pigeon_frame_pipe_new();
+
+	pigeon_tunnel = pigeon_tunnel_new(
+		PIGEON_TUNNEL_NAME,
+		pigeon_frame_pipe_get_tx(pigeon_frame_pipe)
+	);
+
+	pigeon_link = pigeon_link_new(
+		pigeon_frame_pipe_get_rx(pigeon_frame_pipe)
+	);
+
 	command_runner = command_runner_new();
+
 	command_server = command_server_new(command_runner);
 
 	if (!error) {
-		pigeon_tunnel = pigeon_tunnel_open(PIGEON_TUNNEL_NAME);
-		if (pigeon_tunnel == NULL) {
-			perror("Error opening tunnel device");
+		if (!pigeon_tunnel_init(pigeon_tunnel)) {
+			perror("Error initializing tunnel device");
 			error = true;
 		} else {
 			const char *dev_name = pigeon_tunnel_get_dev_name(pigeon_tunnel);
@@ -43,18 +55,11 @@ int main() {
 
 	if (!error) {
 		if (!pigeon_link_init(pigeon_link)) {
-			printf("Error initializing pigeon link\n");
+			perror("Error initializing pigeon link");
 			error = true;
 		}
 
 		pigeon_link_print_debug_info(pigeon_link);
-	}
-
-	if (!error) {
-		if (!command_server_start(command_server)) {
-			printf("Error starting command server\n");
-			error = true;
-		}
 	}
 
 	if (!error) {
@@ -66,10 +71,24 @@ int main() {
 		}
 	}
 
+	if (!error) {
+		if (!command_server_start(command_server)) {
+			printf("Error starting command server\n");
+			error = true;
+		}
+	}
+
 	// TODO: Enable seccomp here. It is important this happens before we
 	//       process data.
-	// TODO: We should have separate init and start for command_server and
-	//       pigeon_tunnel, so they don't run until after seccomp is enabled.
+	// TODO: We should have separate init and start for command_server, so
+	//       it doesn't run until after seccomp is enabled.
+
+	if (!error) {
+		if (!pigeon_tunnel_start(pigeon_tunnel)) {
+			printf("Error starting pigeon tunnel\n");
+			error = true;
+		}
+	}
 
 	if (!error) {
 		if (!pigeon_link_start(pigeon_link)) {
@@ -84,14 +103,14 @@ int main() {
 		char buffer[2048];
 		memset(buffer, 0, sizeof(buffer));
 		while(command_server_is_running(command_server)) {
-			PigeonFrame *pigeon_frame = pigeon_tunnel_read(pigeon_tunnel);
+			PigeonFrame *pigeon_frame = pigeon_tunnel_frames_pop(pigeon_tunnel);
 			if (pigeon_frame != NULL) {
 				pigeon_frame_print_header(pigeon_frame);
 				pigeon_frame_print_data(pigeon_frame);
 				printf("\n");
 				pigeon_frame_free(pigeon_frame);
 			} else {
-				perror("Error reading from tunnel device");
+				fprintf("Error reading from tunnel device\n");
 			}
 		}
 	};
@@ -101,8 +120,8 @@ int main() {
 
 	command_server_stop(command_server);
 	pigeon_link_stop(pigeon_link);
+	pigeon_tunnel_stop(pigeon_tunnel);
 
-	pigeon_tunnel_close(pigeon_tunnel);
 	pigeon_tunnel = NULL;
 
 	command_server_free(command_server);

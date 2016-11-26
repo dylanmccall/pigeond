@@ -25,7 +25,7 @@ CommandServer *command_server_new(CommandRunner *command_runner) {
 	CommandServer *command_server = malloc(sizeof(CommandServer));
 	memset(command_server, 0, sizeof(*command_server));
 	command_server->long_thread = long_thread_new((LongThreadOptions){
-		.name="CommandServer",
+		.name="commandserver",
 		.start_fn=_command_server_thread_start,
 		.stop_fn=_command_server_thread_stop,
 		.loop_fn=_command_server_thread_loop,

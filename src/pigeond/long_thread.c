@@ -23,7 +23,12 @@ LongThread *long_thread_new(LongThreadOptions options) {
 	pthread_mutex_init(&long_thread->thread_started_mutex, NULL);
 	pthread_cond_init(&long_thread->thread_started, NULL);
 	if (long_thread->options.new_fn != NULL) {
-		long_thread->options.new_fn(long_thread, long_thread->options.data);
+		bool result = long_thread->options.new_fn(long_thread, long_thread->options.data);
+		// FIXME: Unreliable constructors are gross. Can we do this differently?
+		if (!result) {
+			free(long_thread);
+			long_thread = NULL;
+		}
 	}
 	return long_thread;
 }

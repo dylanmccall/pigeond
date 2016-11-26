@@ -22,7 +22,7 @@ typedef enum {
 typedef bool (*long_thread_new_t)(LongThread *, void *);
 typedef bool (*long_thread_start_t)(LongThread *, void *);
 typedef bool (*long_thread_stop_t)(LongThread *, void *);
-typedef bool (*long_thread_free_t)(LongThread *, void *);
+typedef void (*long_thread_free_t)(LongThread *, void *);
 typedef LongThreadResult (*long_thread_loop_t)(LongThread *, void *);
 
 struct _LongThreadOptions {

@@ -11,14 +11,13 @@
 #include <stdlib.h>
 
 #include "pigeon_frame.h"
+#include "pigeon_frame_pipe.h"
 
 #define PIGEON_LINK_MTU 300
-#define PIGEON_RX_BUFFER_SIZE 16
-#define PIGEON_TX_BUFFER_SIZE 16
 
 typedef struct _PigeonLink PigeonLink;
 
-PigeonLink *pigeon_link_new();
+PigeonLink *pigeon_link_new(PigeonFramePipeHandle frame_pipe_ref_rx);
 void pigeon_link_free(PigeonLink *pigeon_link);
 bool pigeon_link_init(PigeonLink *pigeon_link);
 bool pigeon_link_start(PigeonLink *pigeon_link);
@@ -29,16 +28,8 @@ bool pigeon_link_is_running(PigeonLink *pigeon_link);
 
 void pigeon_link_print_debug_info(PigeonLink *pigeon_link);
 
-bool pigeon_link_tx_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame);
-size_t pigeon_link_tx_count(PigeonLink *pigeon_link);
-// Get the next frame to send. The caller is now the owner of the frame and
-// must call pigeon_frame_free when finished.
-PigeonFrame *pigeon_link_tx_pop(PigeonLink *pigeon_link);
-
-bool pigeon_link_rx_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame);
-size_t pigeon_link_rx_count(PigeonLink *pigeon_link);
-// Get the next frame received. The caller is now the owner of the frame and
-// must call pigeon_frame_free when finished.
-PigeonFrame *pigeon_link_rx_pop(PigeonLink *pigeon_link);
+PigeonFrame *pigeon_link_frames_pop(PigeonLink *pigeon_link);
+bool pigeon_link_frames_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame);
+size_t pigeon_link_frames_count(PigeonLink *pigeon_link);
 
 #endif
