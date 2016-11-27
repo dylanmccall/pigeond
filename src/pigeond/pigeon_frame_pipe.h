@@ -13,7 +13,7 @@
 
 #include "pigeon_frame.h"
 
-#define PIGEON_FRAME_PIPE_SIZE 100
+#define PIGEON_FRAME_PIPE_SIZE 64
 
 typedef struct _PigeonFramePipe PigeonFramePipe;
 
@@ -35,7 +35,8 @@ PigeonFramePipeHandle pigeon_frame_pipe_get_tx(PigeonFramePipe *pigeon_frame_pip
 PigeonFramePipeHandle pigeon_frame_pipe_get_rx(PigeonFramePipe *pigeon_frame_pipe);
 
 /**
- * Push a frame to the pipe. The caller loses ownership of the frame.
+ * Push a frame to the pipe. The caller transfers ownership of the frame to
+ * the PigeonFramePipe.
  * @return  true if the operation succeeds
  */
 bool pigeon_frame_pipe_push(PigeonFramePipeHandle pigeon_frame_pipe_ref, PigeonFrame *pigeon_frame);

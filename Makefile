@@ -16,6 +16,7 @@ OBJS_pigeond = \
 	pigeond/pigeon_link.o \
 	pigeond/pigeon_linkmod.o \
 	pigeond/pigeon_tunnel.o \
+	pigeond/pointer_fifo.o \
 	pigeond/util.o
 
 DATA_DIRS_pigeon_admin = \
