@@ -159,7 +159,3 @@ PigeonFrame *pigeon_link_frames_pop(PigeonLink *pigeon_link) {
 bool pigeon_link_frames_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame) {
 	return pigeon_frame_pipe_push(pigeon_link->frame_pipe_ref_rx, pigeon_frame);
 }
-
-size_t pigeon_link_frames_count(PigeonLink *pigeon_link) {
-	return pigeon_frame_pipe_count(pigeon_link->frame_pipe_ref_rx);
-}

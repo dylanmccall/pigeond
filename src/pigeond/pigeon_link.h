@@ -30,6 +30,5 @@ void pigeon_link_print_debug_info(PigeonLink *pigeon_link);
 
 PigeonFrame *pigeon_link_frames_pop(PigeonLink *pigeon_link);
 bool pigeon_link_frames_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame);
-size_t pigeon_link_frames_count(PigeonLink *pigeon_link);
 
 #endif

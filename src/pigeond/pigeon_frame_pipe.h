@@ -41,30 +41,30 @@ PigeonFramePipeHandle pigeon_frame_pipe_get_rx(PigeonFramePipe *pigeon_frame_pip
 bool pigeon_frame_pipe_push(PigeonFramePipeHandle pigeon_frame_pipe_ref, PigeonFrame *pigeon_frame);
 
 /**
- * Get the number of frames waiting to be read from the pipe.
- * @return  the number of frames in the read pipe
- */
-size_t pigeon_frame_pipe_count(PigeonFramePipeHandle pigeon_frame_pipe_ref);
-
-/**
- * Get whether there are no frames to be read from the pipe.
- * @return  true if there are no frames in the read pipe
- */
-size_t pigeon_frame_pipe_is_empty(PigeonFramePipeHandle pigeon_frame_pipe_ref);
-
-/**
- * Get whether the pipe is full. Additional frames sent to the pipe will be
- * dropped.
- * @return  true if the read pipe is full
- */
-size_t pigeon_frame_pipe_is_full(PigeonFramePipeHandle pigeon_frame_pipe_ref);
-
-/**
  * Pipe a frame from the pipe. If there are no frames, this operation will
  * block until one arrives. The caller gains ownership of the frame and must
  * call pigeon_frame_free when finished.
  * @return  the next PigeonFrame in the read pipe, or NULL if there was an error
  */
 PigeonFrame *pigeon_frame_pipe_pop(PigeonFramePipeHandle pigeon_frame_pipe_ref);
+
+/**
+ * Get the number of frames waiting to be read from the pipe.
+ * @return  the number of frames in the read pipe
+ */
+size_t pigeon_frame_pipe_read_count(PigeonFramePipeHandle pigeon_frame_pipe_ref);
+
+/**
+ * Get whether there are no frames to be read from the pipe.
+ * @return  true if there are no frames in the read pipe
+ */
+size_t pigeon_frame_pipe_read_is_empty(PigeonFramePipeHandle pigeon_frame_pipe_ref);
+
+/**
+ * Get whether the pipe is full. Additional frames sent to the pipe will be
+ * dropped.
+ * @return  true if the read pipe is full
+ */
+size_t pigeon_frame_pipe_read_is_full(PigeonFramePipeHandle pigeon_frame_pipe_ref);
 
 #endif

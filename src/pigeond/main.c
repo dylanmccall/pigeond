@@ -107,23 +107,8 @@ int main() {
 	}
 
 	if (!error) {
-		// Very ugly placeholder code to read from the device and dump results
-		// to the screen.
-		char buffer[2048];
-		memset(buffer, 0, sizeof(buffer));
-		while(command_server_is_running(command_server)) {
-			PigeonFrame *pigeon_frame = pigeon_tunnel_frames_pop(pigeon_tunnel);
-			if (pigeon_frame != NULL) {
-				pigeon_frame_print_header(pigeon_frame);
-				pigeon_frame_print_data(pigeon_frame);
-				fprintf(stdout, "\n");
-				pigeon_frame_free(pigeon_frame);
-			} else {
-				fprintf(stderr, "Error reading from tunnel device\n");
-			}
-		}
+		command_server_join(command_server);
 	};
-	command_runner = NULL;
 
 	fprintf(stdout, "Exiting…\n");
 

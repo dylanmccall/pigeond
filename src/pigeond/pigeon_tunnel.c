@@ -244,10 +244,6 @@ bool pigeon_tunnel_frames_push(PigeonTunnel *pigeon_tunnel, PigeonFrame *pigeon_
 	return pigeon_frame_pipe_push(pigeon_tunnel->frame_pipe_ref_tx, pigeon_frame);
 }
 
-size_t pigeon_tunnel_frames_count(PigeonTunnel *pigeon_tunnel) {
-	return pigeon_frame_pipe_count(pigeon_tunnel->frame_pipe_ref_tx);
-}
-
 LongThreadResult _pigeon_tunnel_write_thread_loop(LongThread *long_thread, void *data) {
 	PigeonTunnel *pigeon_tunnel = (PigeonTunnel *)data;
 
@@ -286,6 +282,8 @@ LongThreadResult _pigeon_tunnel_read_thread_loop(LongThread *long_thread, void *
 		// We don't worry about undersized packets. Those will be padded automatically.
 		pigeon_frame = pigeon_frame_new(buffer, bytes_read);
 	}
+
+	printf("tunnel-read: Sending next frame\n");
 
 	pigeon_tunnel_frames_push(pigeon_tunnel, pigeon_frame);
 

@@ -30,6 +30,5 @@ int pigeon_tunnel_get_mtu(PigeonTunnel *pigeon_tunnel);
 
 PigeonFrame *pigeon_tunnel_frames_pop(PigeonTunnel *pigeon_tunnel);
 bool pigeon_tunnel_frames_push(PigeonTunnel *pigeon_tunnel, PigeonFrame *pigeon_frame);
-size_t pigeon_tunnel_frames_count(PigeonTunnel *pigeon_tunnel);
 
 #endif
