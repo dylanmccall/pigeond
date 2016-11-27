@@ -17,8 +17,8 @@ void *_pigeon_link_thread(void *arg);
 
 PigeonLink *pigeon_link_new(PigeonFramePipeHandle frame_pipe_ref_rx) {
 	PigeonLink *pigeon_link = malloc(sizeof(PigeonLink));
-	pigeon_link->frame_pipe_ref_rx = frame_pipe_ref_rx;
 	memset(pigeon_link, 0, sizeof(*pigeon_link));
+	pigeon_link->frame_pipe_ref_rx = frame_pipe_ref_rx;
 	return pigeon_link;
 }
 

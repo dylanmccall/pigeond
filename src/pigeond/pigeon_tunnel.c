@@ -249,46 +249,45 @@ size_t pigeon_tunnel_frames_count(PigeonTunnel *pigeon_tunnel) {
 }
 
 LongThreadResult _pigeon_tunnel_write_thread_loop(LongThread *long_thread, void *data) {
-	// PigeonTunnel *pigeon_tunnel = (PigeonTunnel *)data;
+	PigeonTunnel *pigeon_tunnel = (PigeonTunnel *)data;
+
+	PigeonFrame *pigeon_frame = pigeon_tunnel_frames_pop(pigeon_tunnel);
+
+	printf("tunnel-write: Got next frame\n");
+
+	const char *buffer;
+	size_t buffer_size = pigeon_frame_get_buffer(pigeon_frame, &buffer);
+	size_t bytes_written = write(pigeon_tunnel->tun_fd, buffer, buffer_size);
+
+	if (bytes_written < 0) {
+		perror("Error writing to tunnel device");
+	}
+
 	return LONG_THREAD_CONTINUE;
 }
 
 LongThreadResult _pigeon_tunnel_read_thread_loop(LongThread *long_thread, void *data) {
-	// PigeonTunnel *pigeon_tunnel = (PigeonTunnel *)data;
+	PigeonTunnel *pigeon_tunnel = (PigeonTunnel *)data;
+
+	PigeonFrame *pigeon_frame;
+	// FIXME: It would be better to use the MTU for the buffer size here, but
+	// pigeon_tunnel_get_mtu is very inefficient.
+	char buffer[ETHER_MAX_LEN] = {0};
+	size_t bytes_read = read(pigeon_tunnel->tun_fd, &buffer, sizeof(buffer));
+
+	if (bytes_read < 0) {
+		perror("Error reading from tunnel device");
+		pigeon_frame = NULL;
+	} else if (bytes_read > ETHER_MAX_LEN) {
+		fprintf(stderr, "Dropping oversized frame");
+		fprintf(stderr, "Frame is %lu bytes. Expected <= %d bytes.\n", (unsigned long)bytes_read, ETHER_MAX_LEN);
+		pigeon_frame = NULL;
+	} else {
+		// We don't worry about undersized packets. Those will be padded automatically.
+		pigeon_frame = pigeon_frame_new(buffer, bytes_read);
+	}
+
+	pigeon_tunnel_frames_push(pigeon_tunnel, pigeon_frame);
+
 	return LONG_THREAD_CONTINUE;
 }
-
-
-// PigeonFrame *pigeon_tunnel_read(PigeonTunnel *pigeon_tunnel) {
-// 	PigeonFrame *pigeon_frame;
-// 	// FIXME: It would be better to use the MTU for the buffer size here, but
-// 	// pigeon_tunnel_get_mtu is very inefficient.
-// 	char buffer[ETHER_MAX_LEN] = {0};
-// 	size_t bytes_read = read(pigeon_tunnel->tun_fd, &buffer, sizeof(buffer));
-
-// 	if (bytes_read < 0) {
-// 		perror("Error reading from tunnel device");
-// 		pigeon_frame = NULL;
-// 	} else if (bytes_read > ETHER_MAX_LEN) {
-// 		fprintf(stderr, "Dropping oversized frame");
-// 		fprintf(stderr, "Frame is %lu bytes. Expected <= %d bytes.\n", (unsigned long)bytes_read, ETHER_MAX_LEN);
-// 		pigeon_frame = NULL;
-// 		// We don't worry about undersized packets. Those will be padded automatically.
-// 	} else {
-// 		pigeon_frame = pigeon_frame_new(buffer, bytes_read);
-// 	}
-
-// 	return pigeon_frame;
-// }
-
-// int pigeon_tunnel_write(PigeonTunnel *pigeon_tunnel, PigeonFrame *pigeon_frame) {
-// 	const char *buffer;
-// 	size_t buffer_size = pigeon_frame_get_buffer(pigeon_frame, &buffer);
-// 	size_t bytes_written = write(pigeon_tunnel->tun_fd, buffer, buffer_size);
-
-// 	if (bytes_written < 0) {
-// 		perror("Error writing to tunnel device");
-// 	}
-
-// 	return bytes_written;
-// }

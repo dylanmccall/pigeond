@@ -13,7 +13,7 @@
 
 #include "pigeon_frame.h"
 
-#define PIGEON_FRAME_PIPE_SIZE 32
+#define PIGEON_FRAME_PIPE_SIZE 100
 
 typedef struct _PigeonFramePipe PigeonFramePipe;
 
