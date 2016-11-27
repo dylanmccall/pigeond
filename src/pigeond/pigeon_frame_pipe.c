@@ -11,7 +11,7 @@ typedef struct _PipeBuffer PipeBuffer;
 
 struct _PipeBuffer {
 	PointerFifo *fifo;
-	pthread_mutex_t buffer_mutex;
+	pthread_mutex_t fifo_mutex;
 	pthread_mutex_t write_cond_mutex;
 	pthread_cond_t write_cond;
 };
@@ -29,12 +29,12 @@ PigeonFramePipe *pigeon_frame_pipe_new() {
 	memset(pigeon_frame_pipe, 0, sizeof(*pigeon_frame_pipe));
 
 	pigeon_frame_pipe->tx.fifo = pointer_fifo_new(PIGEON_FRAME_PIPE_SIZE);
-	pthread_mutex_init(&pigeon_frame_pipe->tx.buffer_mutex, NULL);
+	pthread_mutex_init(&pigeon_frame_pipe->tx.fifo_mutex, NULL);
 	pthread_mutex_init(&pigeon_frame_pipe->tx.write_cond_mutex, NULL);
 	pthread_cond_init(&pigeon_frame_pipe->tx.write_cond, NULL);
 
 	pigeon_frame_pipe->rx.fifo = pointer_fifo_new(PIGEON_FRAME_PIPE_SIZE);
-	pthread_mutex_init(&pigeon_frame_pipe->rx.buffer_mutex, NULL);
+	pthread_mutex_init(&pigeon_frame_pipe->rx.fifo_mutex, NULL);
 	pthread_mutex_init(&pigeon_frame_pipe->rx.write_cond_mutex, NULL);
 	pthread_cond_init(&pigeon_frame_pipe->rx.write_cond, NULL);
 
@@ -61,19 +61,15 @@ PigeonFramePipeHandle pigeon_frame_pipe_get_rx(PigeonFramePipe *pigeon_frame_pip
 	};
 }
 
-/**
- * Push a frame to the pipe. The caller loses ownership of the frame.
- * @return  true if the operation succeeds
- */
 bool pigeon_frame_pipe_push(PigeonFramePipeHandle pigeon_frame_pipe_ref, PigeonFrame *pigeon_frame) {
 	bool success;
 	PipeBuffer *write_buffer = _pigeon_frame_pipe_ref_get_write_buffer(pigeon_frame_pipe_ref);
 
-	pthread_mutex_lock(&write_buffer->buffer_mutex);
+	pthread_mutex_lock(&write_buffer->fifo_mutex);
 	{
 		success = pointer_fifo_push(write_buffer->fifo, (void *)pigeon_frame);
 	}
-	pthread_mutex_unlock(&write_buffer->buffer_mutex);
+	pthread_mutex_unlock(&write_buffer->fifo_mutex);
 
 	if (success) {
 		printf("PUSHED FRAME\n");
@@ -83,42 +79,58 @@ bool pigeon_frame_pipe_push(PigeonFramePipeHandle pigeon_frame_pipe_ref, PigeonF
 	return success;
 }
 
-/**
- * Get the number of frames waiting to be read from the pipe.
- * @return  the number of frames
- */
 size_t pigeon_frame_pipe_count(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
 	size_t count;
 	PipeBuffer *read_buffer = _pigeon_frame_pipe_ref_get_read_buffer(pigeon_frame_pipe_ref);
 
-	pthread_mutex_lock(&read_buffer->buffer_mutex);
+	pthread_mutex_lock(&read_buffer->fifo_mutex);
 	{
 		count = pointer_fifo_count(read_buffer->fifo);
 	}
-	pthread_mutex_unlock(&read_buffer->buffer_mutex);
+	pthread_mutex_unlock(&read_buffer->fifo_mutex);
 
 	return count;
 }
 
-/**
- * Pipe a frame from the pipe. If there are no frames, this operation will
- * block until one arrives. The caller gains ownership of the frame and must
- * call pigeon_frame_free when finished.
- * @return  the next PigeonFrame in the pipe, or NULL if there was an error
- */
+size_t pigeon_frame_pipe_is_empty(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
+	bool result;
+	PipeBuffer *read_buffer = _pigeon_frame_pipe_ref_get_read_buffer(pigeon_frame_pipe_ref);
+
+	pthread_mutex_lock(&read_buffer->fifo_mutex);
+	{
+		result = pointer_fifo_is_empty(read_buffer->fifo);
+	}
+	pthread_mutex_unlock(&read_buffer->fifo_mutex);
+
+	return result;
+}
+
+size_t pigeon_frame_pipe_is_full(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
+	bool result;
+	PipeBuffer *read_buffer = _pigeon_frame_pipe_ref_get_read_buffer(pigeon_frame_pipe_ref);
+
+	pthread_mutex_lock(&read_buffer->fifo_mutex);
+	{
+		result = pointer_fifo_is_full(read_buffer->fifo);
+	}
+	pthread_mutex_unlock(&read_buffer->fifo_mutex);
+
+	return result;
+}
+
 PigeonFrame *pigeon_frame_pipe_pop(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
 	PigeonFrame *result;
 	PipeBuffer *read_buffer = _pigeon_frame_pipe_ref_get_read_buffer(pigeon_frame_pipe_ref);
 
-	while (pigeon_frame_pipe_count(pigeon_frame_pipe_ref) == 0) {
+	while (pigeon_frame_pipe_is_empty(pigeon_frame_pipe_ref)) {
 		pthread_cond_wait(&read_buffer->write_cond, &read_buffer->write_cond_mutex);
 	}
 
-	pthread_mutex_lock(&read_buffer->buffer_mutex);
+	pthread_mutex_lock(&read_buffer->fifo_mutex);
 	{
 		result = (PigeonFrame *)pointer_fifo_pop(read_buffer->fifo);
 	}
-	pthread_mutex_unlock(&read_buffer->buffer_mutex);
+	pthread_mutex_unlock(&read_buffer->fifo_mutex);
 
 	return result;
 }
