@@ -249,14 +249,18 @@ LongThreadResult _pigeon_tunnel_write_thread_loop(LongThread *long_thread, void 
 
 	PigeonFrame *pigeon_frame = pigeon_tunnel_frames_pop(pigeon_tunnel);
 
-	printf("tunnel-write: Got next frame\n");
+	if (pigeon_frame) {
+		printf("tunnel-write: Got next frame\n");
 
-	const char *buffer;
-	size_t buffer_size = pigeon_frame_get_buffer(pigeon_frame, &buffer);
-	size_t bytes_written = write(pigeon_tunnel->tun_fd, buffer, buffer_size);
+		const char *buffer;
+		size_t buffer_size = pigeon_frame_get_buffer(pigeon_frame, &buffer);
+		size_t bytes_written = write(pigeon_tunnel->tun_fd, buffer, buffer_size);
 
-	if (bytes_written < 0) {
-		perror("Error writing to tunnel device");
+		if (bytes_written < 0) {
+			perror("Error writing to tunnel device");
+		}
+
+		pigeon_frame_free(pigeon_frame);
 	}
 
 	return LONG_THREAD_CONTINUE;
