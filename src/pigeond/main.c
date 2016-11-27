@@ -14,6 +14,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <sys/prctl.h>
+#include <linux/seccomp.h>
+
 // We hard-code the device name so we can create a persistent device. If we
 // decide not to use a persistent device, it is better to use a format string
 // like "pigeon%d" so it will be assigned a unique identifier.
@@ -49,7 +52,7 @@ int main() {
 			error = true;
 		} else {
 			const char *dev_name = pigeon_tunnel_get_dev_name(pigeon_tunnel);
-			printf("Opened tunnel device %s\n", dev_name);
+			fprintf(stderr, "Opened tunnel device %s\n", dev_name);
 		}
 	}
 
@@ -67,32 +70,38 @@ int main() {
 			perror("Error setting MTU");
 			error = true;
 		} else {
-			printf("Set MTU to %d\n", PIGEON_LINK_MTU);
+			fprintf(stdout, "Set MTU to %d\n", PIGEON_LINK_MTU);
 		}
 	}
 
 	if (!error) {
 		if (!command_server_start(command_server)) {
-			printf("Error starting command server\n");
+			fprintf(stderr, "Error starting command server\n");
 			error = true;
 		}
 	}
 
-	// TODO: Enable seccomp here. It is important this happens before we
-	//       process data.
-	// TODO: We should have separate init and start for command_server, so
-	//       it doesn't run until after seccomp is enabled.
-
 	if (!error) {
 		if (!pigeon_tunnel_start(pigeon_tunnel)) {
-			printf("Error starting pigeon tunnel\n");
+			fprintf(stderr, "Error starting pigeon tunnel\n");
 			error = true;
 		}
 	}
 
 	if (!error) {
 		if (!pigeon_link_start(pigeon_link)) {
-			printf("Error starting pigeon link\n");
+			fprintf(stderr, "Error starting pigeon link\n");
+			error = true;
+		}
+	}
+
+	if (!error) {
+		// Enable Seccomp mode.
+		// TODO: We should also setuid to a non-privileged user.
+		// TODO: It would be good to enable seccomp earlier, but it causes
+		//       our thread start functions to deadlock.
+		if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_STRICT) != 0) {
+			perror("Error enabling seccomp");
 			error = true;
 		}
 	}
@@ -107,16 +116,16 @@ int main() {
 			if (pigeon_frame != NULL) {
 				pigeon_frame_print_header(pigeon_frame);
 				pigeon_frame_print_data(pigeon_frame);
-				printf("\n");
+				fprintf(stdout, "\n");
 				pigeon_frame_free(pigeon_frame);
 			} else {
-				fprintf("Error reading from tunnel device\n");
+				fprintf(stderr, "Error reading from tunnel device\n");
 			}
 		}
 	};
 	command_runner = NULL;
 
-	printf("Exiting…\n");
+	fprintf(stdout, "Exiting…\n");
 
 	command_server_stop(command_server);
 	pigeon_link_stop(pigeon_link);
