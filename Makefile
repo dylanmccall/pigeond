@@ -10,6 +10,7 @@ OBJS_pigeond = \
 	pigeond/debounce.o \
 	pigeond/gpio.o \
 	pigeond/linkmods/linkmod_console.o \
+	pigeond/linkmods/linkmod_null.o \
 	pigeond/long_thread.o \
 	pigeond/pigeon_frame.o \
 	pigeond/pigeon_frame_pipe.o \

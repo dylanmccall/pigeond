@@ -10,6 +10,7 @@
 #include "pigeon_linkmod.h"
 
 #include "linkmods/linkmod_console.h"
+#include "linkmods/linkmod_null.h"
 
 // Link tx modes: File, Print, Console.
 // File:  Watch a particular (configured) directory. Write to there if it
@@ -46,6 +47,13 @@ const PigeonLinkmodInfo LINKMODS_TX[] = {
 		.is_available_fn = linkmod_console_tx_is_available,
 		.new_fn = linkmod_console_tx_new,
 		.free_fn = linkmod_console_tx_free
+	},
+	{
+		.type = LINKMOD_TYPE_TX,
+		.name = "null-tx",
+		.is_available_fn = linkmod_null_tx_is_available,
+		.new_fn = linkmod_null_tx_new,
+		.free_fn = linkmod_null_tx_free
 	}
 };
 
@@ -68,10 +76,10 @@ const PigeonLinkmodInfo LINKMODS_RX[] = {
 	},
 	{
 		.type = LINKMOD_TYPE_RX,
-		.name = "console-rx",
-		.is_available_fn = linkmod_console_rx_is_available,
-		.new_fn = linkmod_console_rx_new,
-		.free_fn = linkmod_console_rx_free
+		.name = "null-rx",
+		.is_available_fn = linkmod_null_rx_is_available,
+		.new_fn = linkmod_null_rx_new,
+		.free_fn = linkmod_null_rx_free
 	}
 };
 

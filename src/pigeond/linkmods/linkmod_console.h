@@ -1,8 +1,8 @@
-#ifndef _PIGEON_LINKMOD_CONSOLE_H
-#define _PIGEON_LINKMOD_CONSOLE_H
+#ifndef _LINKMOD_CONSOLE_H
+#define _LINKMOD_CONSOLE_H
 
 /**
- * pigeon_linkmod_console.h
+ * linkmod_console.h
  * Linkmod that echoes packets to the console.
  * @author Dylan McCall <dmccall@sfu.ca>
  */

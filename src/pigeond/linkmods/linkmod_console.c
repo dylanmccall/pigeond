@@ -19,8 +19,11 @@
  */
 typedef struct {
 	PigeonLinkmod public;
+	const char *foo;
 } LinkmodConsole;
 
+bool _linkmod_console_thread_start(LongThread *long_thread, void *data);
+bool _linkmod_console_thread_stop(LongThread *long_thread, void *data);
 LongThreadResult _linkmod_console_tx_thread_loop(LongThread *long_thread, void *data);
 
 /**
@@ -43,10 +46,38 @@ PigeonLinkmod *linkmod_console_tx_new() {
 	memset(linkmod_console, 0, sizeof(*linkmod_console));
 	linkmod_console->public.long_thread = long_thread_new((LongThreadOptions){
 		.name="linkmod-console-tx",
+		.start_fn=_linkmod_console_thread_start,
+		.stop_fn=_linkmod_console_thread_stop,
 		.loop_fn=_linkmod_console_tx_thread_loop,
 		.data=linkmod_console
 	});
 	return (PigeonLinkmod *)linkmod_console;
+}
+
+bool _linkmod_console_thread_start(LongThread *long_thread, void *data) {
+	LinkmodConsole *linkmod_console = (LinkmodConsole *)data;
+
+	bool error = false;
+
+	if (!error) {
+		// Any expensive initialization. (Open files, etc.).
+		linkmod_console->foo = "bar";
+	}
+
+	return !error;
+}
+
+bool _linkmod_console_thread_stop(LongThread *long_thread, void *data) {
+	LinkmodConsole *linkmod_console = (LinkmodConsole *)data;
+
+	bool error = false;
+
+	if (!error) {
+		// Close files opened in _linkmod_console_thread_start.
+		linkmod_console->foo = NULL;
+	}
+
+	return !error;
 }
 
 /**
@@ -78,29 +109,4 @@ LongThreadResult _linkmod_console_tx_thread_loop(LongThread *long_thread, void *
 	}
 
 	return LONG_THREAD_CONTINUE;
-}
-
-// TODO: Remove the Console RX module once File RX is implemented. This is an
-//       unecessary placeholder that does nothing.
-
-bool linkmod_console_rx_is_available() {
-	return true;
-}
-
-PigeonLinkmod *linkmod_console_rx_new(PigeonLinkmod initial) {
-	LinkmodConsole *linkmod_console = malloc(sizeof(LinkmodConsole));
-	memset(linkmod_console, 0, sizeof(*linkmod_console));
-	linkmod_console->public = initial;
-	linkmod_console->public.long_thread = long_thread_new((LongThreadOptions){
-		.name="linkmod-console-rx",
-		.loop_fn=NULL,
-		.data=linkmod_console
-	});
-	return (PigeonLinkmod *)linkmod_console;
-}
-
-void linkmod_console_rx_free(PigeonLinkmod *linkmod) {
-	LinkmodConsole *linkmod_console = (LinkmodConsole *)linkmod;
-	long_thread_free(linkmod_console->public.long_thread);
-	free(linkmod_console);
 }
