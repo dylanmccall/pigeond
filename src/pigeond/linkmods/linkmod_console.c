@@ -22,8 +22,8 @@ typedef struct {
 	const char *foo;
 } LinkmodConsole;
 
-bool _linkmod_console_thread_start(LongThread *long_thread, void *data);
-bool _linkmod_console_thread_stop(LongThread *long_thread, void *data);
+bool _linkmod_console_tx_thread_start(LongThread *long_thread, void *data);
+bool _linkmod_console_tx_thread_stop(LongThread *long_thread, void *data);
 LongThreadResult _linkmod_console_tx_thread_loop(LongThread *long_thread, void *data);
 
 /**
@@ -46,15 +46,25 @@ PigeonLinkmod *linkmod_console_tx_new() {
 	memset(linkmod_console, 0, sizeof(*linkmod_console));
 	linkmod_console->public.long_thread = long_thread_new((LongThreadOptions){
 		.name="linkmod-console-tx",
-		.start_fn=_linkmod_console_thread_start,
-		.stop_fn=_linkmod_console_thread_stop,
+		.start_fn=_linkmod_console_tx_thread_start,
+		.stop_fn=_linkmod_console_tx_thread_stop,
 		.loop_fn=_linkmod_console_tx_thread_loop,
 		.data=linkmod_console
 	});
 	return (PigeonLinkmod *)linkmod_console;
 }
 
-bool _linkmod_console_thread_start(LongThread *long_thread, void *data) {
+/**
+ * Free all the data we created in our constructor, including the LongThread
+ * that we created.
+ */
+void linkmod_console_tx_free(PigeonLinkmod *linkmod) {
+	LinkmodConsole *linkmod_console = (LinkmodConsole *)linkmod;
+	long_thread_free(linkmod_console->public.long_thread);
+	free(linkmod_console);
+}
+
+bool _linkmod_console_tx_thread_start(LongThread *long_thread, void *data) {
 	LinkmodConsole *linkmod_console = (LinkmodConsole *)data;
 
 	bool error = false;
@@ -67,27 +77,17 @@ bool _linkmod_console_thread_start(LongThread *long_thread, void *data) {
 	return !error;
 }
 
-bool _linkmod_console_thread_stop(LongThread *long_thread, void *data) {
+bool _linkmod_console_tx_thread_stop(LongThread *long_thread, void *data) {
 	LinkmodConsole *linkmod_console = (LinkmodConsole *)data;
 
 	bool error = false;
 
 	if (!error) {
-		// Close files opened in _linkmod_console_thread_start.
+		// Close files opened in _linkmod_console_tx_thread_start.
 		linkmod_console->foo = NULL;
 	}
 
 	return !error;
-}
-
-/**
- * Free all the data we created in our constructor, including the LongThread
- * that we created.
- */
-void linkmod_console_tx_free(PigeonLinkmod *linkmod) {
-	LinkmodConsole *linkmod_console = (LinkmodConsole *)linkmod;
-	long_thread_free(linkmod_console->public.long_thread);
-	free(linkmod_console);
 }
 
 /**

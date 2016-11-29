@@ -4,12 +4,14 @@ BINS := pigeond pigeon_admin
 
 OBJS_pigeond = \
 	pigeond/main.o \
+	pigeond/base64.o \
 	pigeond/beagle_joystick.o \
 	pigeond/command_runner.o \
 	pigeond/command_server.o \
 	pigeond/debounce.o \
 	pigeond/gpio.o \
 	pigeond/linkmods/linkmod_console.o \
+	pigeond/linkmods/linkmod_files.o \
 	pigeond/linkmods/linkmod_null.o \
 	pigeond/long_thread.o \
 	pigeond/pigeon_frame.o \

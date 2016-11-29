@@ -133,23 +133,27 @@ bool pigeon_link_is_running(PigeonLink *pigeon_link) {
 }
 
 void pigeon_link_print_debug_info(PigeonLink *pigeon_link) {
-	const char *tx_name;
-	const char *rx_name;
-
 	if (pigeon_link->linkmod_tx) {
-		tx_name = pigeon_linkmod_get_name(pigeon_link->linkmod_tx);
+		const char *tx_name = pigeon_linkmod_get_name(pigeon_link->linkmod_tx);
+		printf("TX link module: %s\n", tx_name);
 	} else {
-		tx_name = "[none]";
+		printf("TX link module: [none]\n");
 	}
 
 	if (pigeon_link->linkmod_rx) {
-		rx_name = pigeon_linkmod_get_name(pigeon_link->linkmod_rx);
+		const char *rx_name = pigeon_linkmod_get_name(pigeon_link->linkmod_rx);
+		printf("RX link module: %s\n", rx_name);
 	} else {
-		rx_name = "[none]";
+		printf("RX link module: [none]\n");
 	}
+}
 
-	printf("TX link module: %s\n", tx_name);
-	printf("RX link module: %s\n", rx_name);
+bool pigeon_link_frames_wait(PigeonLink *pigeon_link) {
+	return pigeon_frame_pipe_wait(pigeon_link->frame_pipe_ref_rx);
+}
+
+bool pigeon_link_frames_has_next(PigeonLink *pigeon_link) {
+	return pigeon_frame_pipe_has_next(pigeon_link->frame_pipe_ref_rx);
 }
 
 PigeonFrame *pigeon_link_frames_pop(PigeonLink *pigeon_link) {

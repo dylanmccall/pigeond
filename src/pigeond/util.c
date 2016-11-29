@@ -2,6 +2,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <string.h>
 
 int timespec_to_milliseconds(struct timespec *time) {
 	int result = 0;
@@ -33,4 +34,15 @@ int timespec_delta_milliseconds(struct timespec *start, struct timespec *end) {
 	struct timespec delta;
 	timespec_delta(start, end, &delta);
 	return timespec_to_milliseconds(&delta);
+}
+
+char *path_join(const char *path1, size_t path1_length, const char *path2, size_t path2_length) {
+	char *path_str;
+
+	path_str = calloc(path1_length + 1 + path2_length, sizeof(*path_str));
+	strncat(path_str, path1, path1_length);
+	strncat(path_str, "/", 1);
+	strncat(path_str, path2, path2_length);
+
+	return path_str;
 }

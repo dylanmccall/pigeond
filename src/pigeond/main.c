@@ -116,6 +116,7 @@ int main() {
 	pigeon_link_stop(pigeon_link);
 	pigeon_tunnel_stop(pigeon_tunnel);
 
+	pigeon_tunnel_free(pigeon_tunnel);
 	pigeon_tunnel = NULL;
 
 	command_server_free(command_server);

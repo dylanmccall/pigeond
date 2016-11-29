@@ -23,4 +23,6 @@ int milliseconds_to_timespec(int milliseconds, struct timespec *out_timespec);
 int timespec_delta(struct timespec *start, struct timespec *end, struct timespec *out_delta);
 int timespec_delta_milliseconds(struct timespec *start, struct timespec *end);
 
+char *path_join(const char *path1, size_t path1_length, const char *path2, size_t path2_length);
+
 #endif

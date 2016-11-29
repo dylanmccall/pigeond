@@ -41,7 +41,13 @@ PigeonFramePipeHandle pigeon_frame_pipe_get_rx(PigeonFramePipe *pigeon_frame_pip
 bool pigeon_frame_pipe_push(PigeonFramePipeHandle pigeon_frame_pipe_ref, PigeonFrame *pigeon_frame);
 
 /**
- * Pipe a frame from the pipe. If there are no frames, this operation will
+ * Wait until a frame is available in the pipe.
+ * @return  true if a frame is now available, or false if an error occurred
+ */
+bool pigeon_frame_pipe_wait(PigeonFramePipeHandle pigeon_frame_pipe_ref);
+
+/**
+ * Pop a frame from the pipe. If there are no frames, this operation will
  * block until one arrives. The caller gains ownership of the frame and must
  * call pigeon_frame_free when finished.
  * @return  the next PigeonFrame in the read pipe, or NULL if there was an error
@@ -53,6 +59,12 @@ PigeonFrame *pigeon_frame_pipe_pop(PigeonFramePipeHandle pigeon_frame_pipe_ref);
  * @return  the number of frames in the read pipe
  */
 size_t pigeon_frame_pipe_read_count(PigeonFramePipeHandle pigeon_frame_pipe_ref);
+
+/**
+ * Check if there is a frame in the pipe.
+ * @return true if there is at least one frame in the read pipe
+ */
+bool pigeon_frame_pipe_has_next(PigeonFramePipeHandle pigeon_frame_pipe_ref);
 
 /**
  * Get whether there are no frames to be read from the pipe.

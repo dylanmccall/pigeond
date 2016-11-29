@@ -28,6 +28,8 @@ bool pigeon_link_is_running(PigeonLink *pigeon_link);
 
 void pigeon_link_print_debug_info(PigeonLink *pigeon_link);
 
+bool pigeon_link_frames_wait(PigeonLink *pigeon_link);
+bool pigeon_link_frames_has_next(PigeonLink *pigeon_link);
 PigeonFrame *pigeon_link_frames_pop(PigeonLink *pigeon_link);
 bool pigeon_link_frames_push(PigeonLink *pigeon_link, PigeonFrame *pigeon_frame);
 

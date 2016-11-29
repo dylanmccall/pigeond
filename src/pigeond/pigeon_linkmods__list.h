@@ -10,6 +10,7 @@
 #include "pigeon_linkmod.h"
 
 #include "linkmods/linkmod_console.h"
+#include "linkmods/linkmod_files.h"
 #include "linkmods/linkmod_null.h"
 
 // Link tx modes: File, Print, Console.
@@ -36,10 +37,10 @@ const PigeonLinkmodInfo LINKMODS_TX[] = {
 	},
 	{
 		.type = LINKMOD_TYPE_TX,
-		.name = "file-tx",
-		.is_available_fn = NULL,
-		.new_fn = NULL,
-		.free_fn = NULL
+		.name = "files-tx",
+		.is_available_fn = linkmod_files_tx_is_available,
+		.new_fn = linkmod_files_tx_new,
+		.free_fn = linkmod_files_tx_free
 	},
 	{
 		.type = LINKMOD_TYPE_TX,
@@ -69,10 +70,10 @@ const PigeonLinkmodInfo LINKMODS_RX[] = {
 	},
 	{
 		.type = LINKMOD_TYPE_RX,
-		.name = "file-rx",
-		.is_available_fn = NULL,
-		.new_fn = NULL,
-		.free_fn = NULL
+		.name = "files-rx",
+		.is_available_fn = linkmod_files_rx_is_available,
+		.new_fn = linkmod_files_rx_new,
+		.free_fn = linkmod_files_rx_free
 	},
 	{
 		.type = LINKMOD_TYPE_RX,

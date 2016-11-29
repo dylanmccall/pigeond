@@ -236,6 +236,14 @@ int pigeon_tunnel_get_mtu(PigeonTunnel *pigeon_tunnel) {
 	}
 }
 
+bool pigeon_tunnel_frames_wait(PigeonTunnel *pigeon_tunnel) {
+	return pigeon_frame_pipe_wait(pigeon_tunnel->frame_pipe_ref_tx);
+}
+
+bool pigeon_tunnel_frames_has_next(PigeonTunnel *pigeon_tunnel) {
+	return pigeon_frame_pipe_has_next(pigeon_tunnel->frame_pipe_ref_tx);
+}
+
 PigeonFrame *pigeon_tunnel_frames_pop(PigeonTunnel *pigeon_tunnel) {
 	return pigeon_frame_pipe_pop(pigeon_tunnel->frame_pipe_ref_tx);
 }
@@ -252,7 +260,10 @@ LongThreadResult _pigeon_tunnel_write_thread_loop(LongThread *long_thread, void 
 	if (pigeon_frame) {
 		printf("tunnel-write: Got next frame\n");
 
-		const char *buffer;
+		pigeon_frame_print_header(pigeon_frame);
+		pigeon_frame_print_data(pigeon_frame);
+
+		const unsigned char *buffer;
 		size_t buffer_size = pigeon_frame_get_buffer(pigeon_frame, &buffer);
 		size_t bytes_written = write(pigeon_tunnel->tun_fd, buffer, buffer_size);
 
@@ -272,8 +283,8 @@ LongThreadResult _pigeon_tunnel_read_thread_loop(LongThread *long_thread, void *
 	PigeonFrame *pigeon_frame;
 	// FIXME: It would be better to use the MTU for the buffer size here, but
 	// pigeon_tunnel_get_mtu is very inefficient.
-	char buffer[ETHER_MAX_LEN] = {0};
-	size_t bytes_read = read(pigeon_tunnel->tun_fd, &buffer, sizeof(buffer));
+	unsigned char buffer[ETHER_MAX_LEN] = {0};
+	ssize_t bytes_read = read(pigeon_tunnel->tun_fd, &buffer, sizeof(buffer));
 
 	if (bytes_read < 0) {
 		perror("Error reading from tunnel device");

@@ -3,7 +3,7 @@
 
 /**
  * linkmod_null.h
- * Linkmod that echoes packets to the console.
+ * Linkmod that does nothing.
  * @author Dylan McCall <dmccall@sfu.ca>
  */
 

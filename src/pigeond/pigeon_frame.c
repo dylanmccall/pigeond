@@ -9,10 +9,10 @@
 #include <net/ethernet.h>
 
 struct _PigeonFrame {
-	char *buffer;
+	unsigned char *buffer;
 	size_t buffer_size;
 	struct ether_header *header;
-	const char *data;
+	const unsigned char *data;
 	size_t data_size;
 };
 
@@ -32,10 +32,10 @@ const EtherTypeInfo ETHER_TYPE_INFO[] = {
 const size_t ETHER_TYPE_INFO_COUNT = sizeof(ETHER_TYPE_INFO) / sizeof(*ETHER_TYPE_INFO);
 
 const EtherTypeInfo *_pigeon_frame_get_ether_type_info(PigeonFrame *pigeon_frame);
-size_t _find_string(const char *data, size_t offset, size_t data_size);
-bool _eol_char(const char value);
+size_t _find_string(const unsigned char *data, size_t offset, size_t data_size);
+bool _eol_char(const unsigned char value);
 
-PigeonFrame *pigeon_frame_new(const char *buffer, size_t buffer_size) {
+PigeonFrame *pigeon_frame_new(const unsigned char *buffer, size_t buffer_size) {
 	PigeonFrame *pigeon_frame = malloc(sizeof(PigeonFrame));
 	memset(pigeon_frame, 0, sizeof(*pigeon_frame));
 
@@ -68,12 +68,12 @@ void pigeon_frame_free(PigeonFrame *pigeon_frame) {
 	free(pigeon_frame);
 }
 
-size_t pigeon_frame_get_buffer(PigeonFrame *pigeon_frame, const char **out_buffer) {
+size_t pigeon_frame_get_buffer(PigeonFrame *pigeon_frame, const unsigned char **out_buffer) {
 	*out_buffer = pigeon_frame->buffer;
 	return pigeon_frame->buffer_size;
 }
 
-size_t pigeon_frame_get_data(PigeonFrame *pigeon_frame, const char **out_data) {
+size_t pigeon_frame_get_data(PigeonFrame *pigeon_frame, const unsigned char **out_data) {
 	*out_data = pigeon_frame->data;
 	return pigeon_frame->data_size;
 }
@@ -104,7 +104,7 @@ void pigeon_frame_print_data(PigeonFrame *pigeon_frame) {
 		size_t string_end = 0;
 
 		for (size_t i = 0; i < pigeon_frame->data_size; i++) {
-			char value = pigeon_frame->data[i];
+			unsigned char value = pigeon_frame->data[i];
 
 			if (i > string_end) {
 				string_end = _find_string(pigeon_frame->data, i, pigeon_frame->data_size);
@@ -142,11 +142,11 @@ const EtherTypeInfo *_pigeon_frame_get_ether_type_info(PigeonFrame *pigeon_frame
 	return NULL;
 }
 
-size_t _find_string(const char *data, size_t offset, size_t data_size) {
+size_t _find_string(const unsigned char *data, size_t offset, size_t data_size) {
 	assert(offset < data_size);
 	size_t line_end = 0;
 	for (size_t i = offset; i < data_size; i++) {
-		char value = data[i];
+		unsigned char value = data[i];
 		if (isprint(value)) {
 			line_end = 0;
 		} else if (i > offset+3 && _eol_char(value)) {
@@ -162,6 +162,6 @@ size_t _find_string(const char *data, size_t offset, size_t data_size) {
 	return line_end;
 }
 
-bool _eol_char(const char value) {
+bool _eol_char(const unsigned char value) {
 	return value == '\r' || value == '\n';
 }

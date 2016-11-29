@@ -21,6 +21,8 @@ struct _PigeonFramePipe {
 	PipeBuffer rx;
 };
 
+PigeonFrame *_pigeon_frame_pipe_try_pop(PigeonFramePipeHandle pigeon_frame_pipe_ref);
+
 PipeBuffer *_pigeon_frame_pipe_ref_get_write_buffer(PigeonFramePipeHandle pigeon_frame_pipe_ref);
 PipeBuffer *_pigeon_frame_pipe_ref_get_read_buffer(PigeonFramePipeHandle pigeon_frame_pipe_ref);
 
@@ -78,21 +80,26 @@ bool pigeon_frame_pipe_push(PigeonFramePipeHandle pigeon_frame_pipe_ref, PigeonF
 	return success;
 }
 
-PigeonFrame *pigeon_frame_pipe_pop(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
-	PigeonFrame *result;
+bool pigeon_frame_pipe_wait(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
 	PipeBuffer *read_buffer = _pigeon_frame_pipe_ref_get_read_buffer(pigeon_frame_pipe_ref);
 
 	while (pigeon_frame_pipe_read_is_empty(pigeon_frame_pipe_ref)) {
 		pthread_cond_wait(&read_buffer->write_cond, &read_buffer->write_cond_mutex);
 	}
 
-	pthread_mutex_lock(&read_buffer->fifo_mutex);
-	{
-		result = (PigeonFrame *)pointer_fifo_pop(read_buffer->fifo);
-	}
-	pthread_mutex_unlock(&read_buffer->fifo_mutex);
+	return true;
+}
 
-	return result;
+bool pigeon_frame_pipe_has_next(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
+	return !pigeon_frame_pipe_read_is_empty(pigeon_frame_pipe_ref);
+}
+
+PigeonFrame *pigeon_frame_pipe_pop(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
+	if (pigeon_frame_pipe_wait(pigeon_frame_pipe_ref)) {
+		return _pigeon_frame_pipe_try_pop(pigeon_frame_pipe_ref);
+	} else {
+		return NULL;
+	}
 }
 
 size_t pigeon_frame_pipe_read_count(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
@@ -128,6 +135,19 @@ size_t pigeon_frame_pipe_read_is_full(PigeonFramePipeHandle pigeon_frame_pipe_re
 	pthread_mutex_lock(&read_buffer->fifo_mutex);
 	{
 		result = pointer_fifo_is_full(read_buffer->fifo);
+	}
+	pthread_mutex_unlock(&read_buffer->fifo_mutex);
+
+	return result;
+}
+
+PigeonFrame *_pigeon_frame_pipe_try_pop(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
+	PigeonFrame *result;
+	PipeBuffer *read_buffer = _pigeon_frame_pipe_ref_get_read_buffer(pigeon_frame_pipe_ref);
+
+	pthread_mutex_lock(&read_buffer->fifo_mutex);
+	{
+		result = (PigeonFrame *)pointer_fifo_pop(read_buffer->fifo);
 	}
 	pthread_mutex_unlock(&read_buffer->fifo_mutex);
 

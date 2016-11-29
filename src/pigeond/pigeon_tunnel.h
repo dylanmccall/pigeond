@@ -28,6 +28,8 @@ const char *pigeon_tunnel_get_dev_name(PigeonTunnel *pigeon_tunnel);
 bool pigeon_tunnel_set_mtu(PigeonTunnel *pigeon_tunnel, int mtu);
 int pigeon_tunnel_get_mtu(PigeonTunnel *pigeon_tunnel);
 
+bool pigeon_tunnel_frames_wait(PigeonTunnel *pigeon_tunnel);
+bool pigeon_tunnel_frames_has_next(PigeonTunnel *pigeon_tunnel);
 PigeonFrame *pigeon_tunnel_frames_pop(PigeonTunnel *pigeon_tunnel);
 bool pigeon_tunnel_frames_push(PigeonTunnel *pigeon_tunnel, PigeonFrame *pigeon_frame);
 
