@@ -1,2 +1,3 @@
+sudo apt-get install libqrencode (one time setup to install qr library)
 echo BB-UART5 > /sys/devices/platform/bone_capemgr/slots
 stty -F /dev/ttyO5 19200

@@ -41,7 +41,7 @@ CC ?= gcc
 CC_armhf ?= arm-linux-gnueabihf-gcc
 CFLAGS ?= -g -Wall -Werror -std=c99 -D _POSIX_C_SOURCE=200809L
 CFLAGS_armhf ?= $(CFLAGS) -I ./includes_armhf
-LDFLAGS ?= -lm -lpthread -ldmtx
+LDFLAGS ?= -lm -lpthread -ldmtx -lqrencode
 LDFLAGS_armhf ?= $(LDFLAGS) -L ./libs_armhf
 
 include Makefile.base
