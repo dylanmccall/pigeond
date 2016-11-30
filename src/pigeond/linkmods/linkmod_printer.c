@@ -7,6 +7,12 @@
 #include <fcntl.h>
 
 #define PRINTER_FILE "/dev/ttyO5"
+
+static struct timespec PRINT_DELAY = {
+	.tv_sec=30,
+	.tv_nsec=0
+};
+
 /**
  * A linkmod porovides an abstract interface for our modem to send and receive
  * data. This is necessary because the same data can be carried over a variety
@@ -115,6 +121,7 @@ LongThreadResult _linkmod_printer_tx_thread_loop(LongThread *long_thread, void *
 		size_t numToPrint;
 		numToPrint = pigeon_frame_get_data(pigeon_frame, &toPrint);
 		printer_printQRCode(linkmod_printer->fileDescriptor, toPrint, (int)numToPrint);
+		nanosleep(&PRINT_DELAY, NULL);
 		//pigeon_frame_print_header(pigeon_frame);
 		//pigeon_frame_print_data(pigeon_frame);
 		pigeon_frame_free(pigeon_frame);
