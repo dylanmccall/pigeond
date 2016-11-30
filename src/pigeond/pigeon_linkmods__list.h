@@ -12,6 +12,7 @@
 #include "linkmods/linkmod_console.h"
 #include "linkmods/linkmod_files.h"
 #include "linkmods/linkmod_null.h"
+#include "linkmods/linkmod_printer.h"
 
 // Link tx modes: File, Print, Console.
 // File:  Watch a particular (configured) directory. Write to there if it
@@ -31,9 +32,9 @@ const PigeonLinkmodInfo LINKMODS_TX[] = {
 	{
 		.type = LINKMOD_TYPE_TX,
 		.name = "print-tx",
-		.is_available_fn = NULL,
-		.new_fn = NULL,
-		.free_fn = NULL
+		.is_available_fn = linkmod_printer_tx_is_available,
+		.new_fn = linkmod_printer_tx_new,
+		.free_fn = linkmod_printer_tx_free
 	},
 	{
 		.type = LINKMOD_TYPE_TX,
