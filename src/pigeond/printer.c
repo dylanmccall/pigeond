@@ -274,10 +274,10 @@ void printer_printTestBitmap(int fileDescriptor)
   write(fileDescriptor, "\n", 1);
   
   for (int i = 0; i < adalogo_height; i++) {
-    write(fd, "\x12", 1);
-    write(fd, "*", 1);
-    write(fd, "\x1", 1);
-    write(fd, "\x30", 1);
+    write(fileDescriptor, "\x12", 1);
+    write(fileDescriptor, "*", 1);
+    write(fileDescriptor, "\x1", 1);
+    write(fileDescriptor, "\x30", 1);
     for (int j = 0; j < 48; j++) {
       if (j >= 10) {
         write(fileDescriptor, "\x00", 1);

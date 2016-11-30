@@ -1,9 +1,10 @@
-#include "linkmod_console.h"
+#include "linkmod_printer.h"
 
 #include <stdio.h>
 #include <string.h>
-#include "printer.h"
+#include "../printer.h"
 #include <unistd.h>
+#include <fcntl.h>
 
 #define PRINTER_FILE "/dev/ttyO5"
 /**
@@ -66,7 +67,7 @@ PigeonLinkmod *linkmod_printer_tx_new() {
  * Free all the data we created in our constructor, including the LongThread
  * that we created.
  */
-void linkmod_console_tx_free(PigeonLinkmod *linkmod) {
+void linkmod_printer_tx_free(PigeonLinkmod *linkmod) {
 	LinkmodPrinter *linkmod_printer = (LinkmodPrinter *)linkmod;
 	long_thread_free(linkmod_printer->public.long_thread);
 	free(linkmod_printer);
@@ -110,9 +111,9 @@ LongThreadResult _linkmod_printer_tx_thread_loop(LongThread *long_thread, void *
 	PigeonFrame *pigeon_frame = pigeon_link_frames_pop(pigeon_link);
 
 	if (pigeon_frame) {
-		unsigned char *toPrint;
+		const unsigned char *toPrint;
 		size_t numToPrint;
-		numToPrint = pigeon_frame_get_data(pigeon_frame, toPrint);
+		numToPrint = pigeon_frame_get_data(pigeon_frame, &toPrint);
 		printer_printQRCode(linkmod_printer->fileDescriptor, toPrint, (int)numToPrint);
 		//pigeon_frame_print_header(pigeon_frame);
 		//pigeon_frame_print_data(pigeon_frame);

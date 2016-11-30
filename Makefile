@@ -12,6 +12,7 @@ OBJS_pigeond = \
 	pigeond/gpio.o \
 	pigeond/linkmods/linkmod_console.o \
 	pigeond/linkmods/linkmod_files.o \
+	pigeond/linkmods/linkmod_printer.o \
 	pigeond/linkmods/linkmod_null.o \
 	pigeond/long_thread.o \
 	pigeond/pigeon_frame.o \
@@ -20,6 +21,7 @@ OBJS_pigeond = \
 	pigeond/pigeon_linkmod.o \
 	pigeond/pigeon_tunnel.o \
 	pigeond/pointer_fifo.o \
+	pigeond/printer.o \
 	pigeond/util.o
 
 DATA_DIRS_pigeon_admin = \
