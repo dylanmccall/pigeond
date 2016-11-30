@@ -39,28 +39,46 @@ PigeonFrame *pigeon_frame_new(const unsigned char *buffer, size_t buffer_size) {
 	PigeonFrame *pigeon_frame = malloc(sizeof(PigeonFrame));
 	memset(pigeon_frame, 0, sizeof(*pigeon_frame));
 
-	if (buffer_size < ETHER_MIN_LEN) {
-		// Pad ethernet frames if needed
-		pigeon_frame->buffer = malloc(ETHER_MIN_LEN);
-		pigeon_frame->buffer_size = ETHER_MIN_LEN;
-	} else {
+	bool error = false;
+
+	if (!error) {
+		if (buffer_size > ETHER_MAX_LEN) {
+			// If the buffer is over-sized, we should stop immediately.
+			fprintf(stderr, "Dropping over-sized frame");
+			error = true;
+		} else if (buffer_size < ETHER_MIN_LEN || buffer_size < ETHER_HDR_LEN) {
+			// We used to pad with empty space, but that seems unnecessary.
+			fprintf(stderr, "Dropping under-sized frame");
+			error = true;
+		}
+	}
+
+	if (!error) {
 		pigeon_frame->buffer = malloc(buffer_size);
 		pigeon_frame->buffer_size = buffer_size;
+		error = (pigeon_frame->buffer == NULL);
 	}
 
-	memcpy(pigeon_frame->buffer, buffer, buffer_size);
+	if (!error) {
+		memcpy(pigeon_frame->buffer, buffer, buffer_size);
 
-	pigeon_frame->header = (struct ether_header *) pigeon_frame->buffer + 0;
+		pigeon_frame->header = (struct ether_header *) pigeon_frame->buffer + 0;
 
-	if (pigeon_frame->buffer_size > ETHER_HDR_LEN) {
-		pigeon_frame->data = pigeon_frame->buffer + ETHER_HDR_LEN;
-		pigeon_frame->data_size = pigeon_frame->buffer_size - ETHER_HDR_LEN - 1;
+		if (pigeon_frame->buffer_size > ETHER_HDR_LEN) {
+			pigeon_frame->data = pigeon_frame->buffer + ETHER_HDR_LEN;
+			pigeon_frame->data_size = pigeon_frame->buffer_size - ETHER_HDR_LEN - 1;
+		} else {
+			pigeon_frame->data = NULL;
+			pigeon_frame->data_size = 0;
+		}
+	}
+
+	if (!error) {
+		return pigeon_frame;
 	} else {
-		pigeon_frame->data = NULL;
-		pigeon_frame->data_size = 0;
+		free(pigeon_frame);
+		return NULL;
 	}
-
-	return pigeon_frame;
 }
 
 void pigeon_frame_free(PigeonFrame *pigeon_frame) {
@@ -79,27 +97,31 @@ size_t pigeon_frame_get_data(PigeonFrame *pigeon_frame, const unsigned char **ou
 }
 
 void pigeon_frame_print_header(PigeonFrame *pigeon_frame) {
-	const EtherTypeInfo *ether_type_info = _pigeon_frame_get_ether_type_info(pigeon_frame);
+	if (pigeon_frame->header) {
+		const EtherTypeInfo *ether_type_info = _pigeon_frame_get_ether_type_info(pigeon_frame);
 
-	printf("Destination: ");
-	for (int i = 0; i < ETH_ALEN; i++) printf("%x ", pigeon_frame->header->ether_dhost[i]);
-	printf("\n");
+		printf("Destination: ");
+		for (int i = 0; i < ETH_ALEN; i++) printf("%x ", pigeon_frame->header->ether_dhost[i]);
+		printf("\n");
 
-	printf("Source: ");
-	for (int i = 0; i < ETH_ALEN; i++) printf("%x ", pigeon_frame->header->ether_shost[i]);
-	printf("\n");
+		printf("Source: ");
+		for (int i = 0; i < ETH_ALEN; i++) printf("%x ", pigeon_frame->header->ether_shost[i]);
+		printf("\n");
 
-	if (ether_type_info != NULL) {
-		printf("Type: %s\n", ether_type_info->name);
+		if (ether_type_info != NULL) {
+			printf("Type: %s\n", ether_type_info->name);
+		} else {
+			printf("Type: %x\n", ntohs(pigeon_frame->header->ether_type));
+		}
+
+		printf("Data: %lu bytes\n", (unsigned long)pigeon_frame->data_size);
 	} else {
-		printf("Type: %x\n", ntohs(pigeon_frame->header->ether_type));
+		printf("Empty frame\n");
 	}
-
-	printf("Data: %lu bytes\n", (unsigned long)pigeon_frame->data_size);
 }
 
 void pigeon_frame_print_data(PigeonFrame *pigeon_frame) {
-	if (pigeon_frame->data_size > 0) {
+	if (pigeon_frame->data) {
 		size_t string_start = 0;
 		size_t string_end = 0;
 
@@ -126,6 +148,8 @@ void pigeon_frame_print_data(PigeonFrame *pigeon_frame) {
 			}
 		}
 		printf("\n");
+	} else {
+		printf("No data\n");
 	}
 }
 

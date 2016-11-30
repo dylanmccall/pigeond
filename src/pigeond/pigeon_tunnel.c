@@ -298,9 +298,10 @@ LongThreadResult _pigeon_tunnel_read_thread_loop(LongThread *long_thread, void *
 		pigeon_frame = pigeon_frame_new(buffer, bytes_read);
 	}
 
-	printf("tunnel-read: Sending next frame\n");
-
-	pigeon_tunnel_frames_push(pigeon_tunnel, pigeon_frame);
+	if (pigeon_frame != NULL) {
+		printf("tunnel-read: Sending next frame\n");
+		pigeon_tunnel_frames_push(pigeon_tunnel, pigeon_frame);
+	}
 
 	return LONG_THREAD_CONTINUE;
 }

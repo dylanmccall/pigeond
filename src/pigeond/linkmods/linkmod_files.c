@@ -27,8 +27,8 @@
 #define FILES_DIR_RX_VAR_NAME "PIGEOND_FILES_RX"
 #define FRAMES_TX_FILE_NAME ".pigeond.frames.tx"
 
-#define MAX_WRITE_COUNT 20
-#define MAX_WRITE_TIME 10
+#define MAX_WRITE_COUNT 50
+#define MAX_WRITE_TIME_MS 10 * SECONDS_IN_MILLISECONDS
 
 #define READ_BUFFER_SIZE PIGEON_LINK_MTU * 10
 
@@ -37,21 +37,31 @@ static struct timespec FILES_DIR_POLL_DELAY = {
 	.tv_nsec=0
 };
 
+static struct timespec FRAMES_POLL_DELAY = {
+	.tv_sec=0,
+	.tv_nsec=50 * MILLISECONDS_IN_NANOSECONDS
+};
+
 typedef struct {
 	PigeonLinkmod public;
 	const char *files_dir_path;
 	char *frames_file_path;
 	Base64 *base64;
+	bool transfer_complete;
 } LinkmodFiles;
 
 bool _linkmod_files_thread_start(LongThread *long_thread, void *data);
 bool _linkmod_files_thread_stop(LongThread *long_thread, void *data);
 
 LongThreadResult _linkmod_files_tx_thread_loop(LongThread *long_thread, void *data);
-LongThreadResult _linkmod_files_rx_thread_loop(LongThread *long_thread, void *data);
-
 bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link);
+
+LongThreadResult _linkmod_files_rx_thread_loop(LongThread *long_thread, void *data);
 bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link);
+
+unsigned char *_pigeon_frame_to_b64(Base64 *base64, PigeonFrame *pigeon_frame, size_t *out_b64_buffer_size);
+bool _pigeon_frame_to_file(Base64 *base64, PigeonFrame *pigeon_frame, FILE *file);
+PigeonFrame *_b64_to_pigeon_frame(Base64 *base64, const unsigned char *b64_buffer, size_t b64_buffer_size);
 
 bool linkmod_files_tx_is_available() {
 	return getenv(FILES_DIR_TX_VAR_NAME) != NULL;
@@ -148,15 +158,92 @@ LongThreadResult _linkmod_files_tx_thread_loop(LongThread *long_thread, void *da
 
 	files_dir = opendir(linkmod_files->files_dir_path);
 
-	if (files_dir && pigeon_link_frames_wait(pigeon_link)) {
-		// We can send files, and we have packets to send!
+	if (files_dir && !linkmod_files->transfer_complete) {
+		// There might be files available to read.
+		printf("Device connected. Writing frames...\n");
 		_push_to_frames_file(linkmod_files, pigeon_link);
 		closedir(files_dir);
-	} else {
-		nanosleep(&FILES_DIR_POLL_DELAY, NULL);
+	} else if (!files_dir && linkmod_files->transfer_complete) {
+		// Once the device is removed, we should be ready to transfer files again
+		printf("Device removed.\n");
+		linkmod_files->transfer_complete = false;
 	}
 
+	nanosleep(&FILES_DIR_POLL_DELAY, NULL);
+
 	return LONG_THREAD_CONTINUE;
+}
+
+bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) {
+	// It is important that we open the file with O_SYNC so changes are committed to disk.
+	FILE *frames_file = fopen(linkmod_files->frames_file_path, "a");
+
+	if (frames_file == NULL) {
+		perror("Error opening frames file");
+		return false;
+	} else {
+		int file_flags = fcntl(fileno(frames_file), F_GETFL) | O_DSYNC | O_RSYNC;
+		fcntl(fileno(frames_file), F_SETFL, file_flags);
+	}
+
+	struct timespec transfer_start_time = {0, 0};
+	struct timespec now_time = {0, 0};
+	int frames_count = 0;
+	bool error = false;
+
+	while (!error && !linkmod_files->transfer_complete) {
+		PigeonFrame *pigeon_frame;
+
+		if (pigeon_link_frames_has_next(pigeon_link)) {
+			pigeon_frame = pigeon_link_frames_pop(pigeon_link);
+		} else {
+			pigeon_frame = NULL;
+		}
+
+		clock_gettime(CLOCK_MONOTONIC, &now_time);
+
+		if (pigeon_frame) {
+			if (_pigeon_frame_to_file(linkmod_files->base64, pigeon_frame, frames_file)) {
+				// Frame was written successfully. Yay! Count this one.
+				printf("Wrote frame to file\n");
+				if (frames_count == 0) {
+					// Start counting to MAX_WRITE_COUNT from the first frame
+					transfer_start_time = now_time;
+				}
+				frames_count += 1;
+			} else {
+				// If anything goes wrong, exit.
+				printf("Something went wrong :(\n");
+				error = true;
+			}
+		}
+
+		if (frames_count >= MAX_WRITE_COUNT) {
+			linkmod_files->transfer_complete = true;
+		} else if (frames_count > 0 && timespec_delta_milliseconds(&transfer_start_time, &now_time) >= MAX_WRITE_TIME_MS) {
+			linkmod_files->transfer_complete = true;
+		}
+
+		if (!error && !linkmod_files->transfer_complete) {
+			nanosleep(&FRAMES_POLL_DELAY, NULL);
+		}
+	}
+
+	if (frames_file) {
+		fflush(frames_file);
+		fclose(frames_file);
+	}
+
+	if (linkmod_files->transfer_complete) {
+		printf("Finished writing frames to file\n");
+		// TODOO: This is a good place to make a beep sound.
+	} else if (error) {
+		printf("Cancelled writing frames to file\n");
+		linkmod_files->transfer_complete = true;
+		// TODO: And another beep sound.
+	}
+
+	return !error;
 }
 
 LongThreadResult _linkmod_files_rx_thread_loop(LongThread *long_thread, void *data) {
@@ -178,40 +265,6 @@ LongThreadResult _linkmod_files_rx_thread_loop(LongThread *long_thread, void *da
 	return LONG_THREAD_CONTINUE;
 }
 
-bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) {
-	FILE *frames_file = fopen(linkmod_files->frames_file_path, "a");
-
-	// It is important that we open the file with O_SYNC so changes are committed to disk.
-	int file_flags = fcntl(fileno(frames_file), F_GETFL) | O_DSYNC | O_RSYNC;
-	fcntl(fileno(frames_file), F_SETFL, file_flags);
-
-	if (frames_file) {
-		while (pigeon_link_frames_has_next(pigeon_link)) {
-			PigeonFrame *pigeon_frame = pigeon_link_frames_pop(pigeon_link);
-			const unsigned char *raw_buffer;
-			size_t raw_buffer_size;
-			unsigned char *b64_buffer;
-			size_t b64_buffer_size;
-
-			raw_buffer_size = pigeon_frame_get_buffer(pigeon_frame, &raw_buffer);
-			b64_buffer = base64_encode(linkmod_files->base64, raw_buffer, raw_buffer_size, &b64_buffer_size);
-
-			if (b64_buffer != NULL) {
-				fwrite(b64_buffer, sizeof(*b64_buffer), b64_buffer_size, frames_file);
-				fprintf(frames_file, "\n");
-				free(b64_buffer);
-			}
-		}
-
-		fflush(frames_file);
-		fclose(frames_file);
-	} else {
-		perror("Error opening frames file");
-	}
-
-	return true;
-}
-
 bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) {
 	FILE *frames_file = fopen(linkmod_files->frames_file_path, "r+");
 
@@ -226,14 +279,10 @@ bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link)
 			if (line_length > 0 && raw_buffer[line_length-1] == '\n') {
 				// Remove \n from the end of each line. (It was added by us).
 				line_length -= 1;
-
-				unsigned char *decode_buffer;
-				size_t decode_buffer_size;
-
-				decode_buffer = base64_decode(linkmod_files->base64, (unsigned char *)raw_buffer, line_length, &decode_buffer_size);
-				PigeonFrame *pigeon_frame = pigeon_frame_new(decode_buffer, decode_buffer_size);
-				pigeon_link_frames_push(pigeon_link, pigeon_frame);
-				free(decode_buffer);
+				PigeonFrame *pigeon_frame = _b64_to_pigeon_frame(linkmod_files->base64, (unsigned char *)raw_buffer, line_length);
+				if (pigeon_frame != NULL) {
+					pigeon_link_frames_push(pigeon_link, pigeon_frame);
+				}
 			} else if (line_length > 0) {
 				// This line is probably too long. That can't be good :(
 				break;
@@ -247,4 +296,48 @@ bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link)
 	}
 
 	return true;
+}
+
+unsigned char *_pigeon_frame_to_b64(Base64 *base64, PigeonFrame *pigeon_frame, size_t *out_b64_buffer_size) {
+	const unsigned char *raw_buffer;
+	size_t raw_buffer_size;
+	raw_buffer_size = pigeon_frame_get_buffer(pigeon_frame, &raw_buffer);
+	return base64_encode(base64, raw_buffer, raw_buffer_size, out_b64_buffer_size);
+}
+
+bool _pigeon_frame_to_file(Base64 *base64, PigeonFrame *pigeon_frame, FILE *frames_file) {	
+	size_t b64_buffer_size;
+	unsigned char *b64_buffer = _pigeon_frame_to_b64(base64, pigeon_frame, &b64_buffer_size);
+	const char *newline = "\n";
+
+	if (b64_buffer != NULL) {
+		bool error = false;
+
+		if (!error) {
+			error = fwrite(b64_buffer, sizeof(*b64_buffer), b64_buffer_size, frames_file) == 0;
+		}
+
+		if (!error) {
+			error = fwrite(newline, sizeof(*newline), 1, frames_file) == 0;
+		}
+
+		if (error) {
+			perror("Error writing frame to file");
+		}
+
+		free(b64_buffer);
+
+		return !error;
+	} else {
+		return false;
+	}
+}
+
+PigeonFrame *_b64_to_pigeon_frame(Base64 *base64, const unsigned char *b64_buffer, size_t b64_buffer_size) {
+	unsigned char *decode_buffer;
+	size_t decode_buffer_size;
+	decode_buffer = base64_decode(base64, b64_buffer, b64_buffer_size, &decode_buffer_size);
+	PigeonFrame *pigeon_frame = pigeon_frame_new(decode_buffer, decode_buffer_size);
+	free(decode_buffer);
+	return pigeon_frame;
 }
