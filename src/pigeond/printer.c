@@ -8,6 +8,7 @@
 //#include "pdf417lib.h"
 //#include <dmtx.h>
 #include <qrencode.h>
+#include <time.h>
 
 #define adalogo_width  75
 #define adalogo_height 75
@@ -128,6 +129,7 @@ void printBitmap(int fileDescriptor, unsigned char* input, int rows, int columns
     return;
   }
 
+  struct timespec pollingDelay = {0, 50000000};
   write(fileDescriptor, "\n", 1);
   
   for (int i = 0; i < rows; i++) {
@@ -158,6 +160,7 @@ void printBitmap(int fileDescriptor, unsigned char* input, int rows, int columns
         }
         free(newBytes); 
       }
+      nanosleep(&pollingDelay, (struct timespec *) NULL);
     }
   }
 
