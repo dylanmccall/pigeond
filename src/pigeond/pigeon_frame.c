@@ -44,12 +44,11 @@ PigeonFrame *pigeon_frame_new(const unsigned char *buffer, size_t buffer_size) {
 	if (!error) {
 		if (buffer_size > ETHER_MAX_LEN) {
 			// If the buffer is over-sized, we should stop immediately.
-			fprintf(stderr, "Dropping over-sized frame");
+			fprintf(stderr, "Dropping over-sized frame\n");
 			error = true;
-		} else if (buffer_size < ETHER_MIN_LEN || buffer_size < ETHER_HDR_LEN) {
-			// We used to pad with empty space, but that seems unnecessary.
-			fprintf(stderr, "Dropping under-sized frame");
-			error = true;
+		} else if (buffer_size < ETHER_MIN_LEN) {
+			// Pad undersized frame with empty space
+			buffer_size = ETHER_MIN_LEN;
 		}
 	}
 
