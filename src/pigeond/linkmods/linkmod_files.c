@@ -3,30 +3,32 @@
 #include "../util.h"
 #include "../base64.h"
 
+#include <dirent.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/inotify.h>
-#include <unistd.h>
-#include <limits.h>
 #include <sys/types.h>
-#include <dirent.h>
+#include <unistd.h>
 
 // TODO: It would be way better to use udisk for this, since it provides event
 //       callbacks for directories being mounted. Alas, opendir is much, much
 //       easier to throw together on a whim in our case :)
 
-// FIXME: We should make sure files are completely committed to disk.
-
 // FIXME: There is currently no way to stop this from writing to files.
 //        Perhaps stop automatically and beep after 20 packets or 10 seconds?
 
-// TODO: It is only possible to have frames.tx or frames.rx in a single
-//        directory - never both. We should have a mechanism so a device can
-//        both read and write frames without getting confused.
+// TODO: It is only possible to have frames.tx or frames.rx in a single place.
+//       They can never overlap. We should have a mechanism so a device can
+//       both read and write frames without getting confused.
 
 #define FILES_DIR_TX_VAR_NAME "PIGEOND_FILES_TX"
 #define FILES_DIR_RX_VAR_NAME "PIGEOND_FILES_RX"
 #define FRAMES_TX_FILE_NAME ".pigeond.frames.tx"
+
+#define MAX_WRITE_COUNT 20
+#define MAX_WRITE_TIME 10
 
 #define READ_BUFFER_SIZE PIGEON_LINK_MTU * 10
 
@@ -179,6 +181,10 @@ LongThreadResult _linkmod_files_rx_thread_loop(LongThread *long_thread, void *da
 bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) {
 	FILE *frames_file = fopen(linkmod_files->frames_file_path, "a");
 
+	// It is important that we open the file with O_SYNC so changes are committed to disk.
+	int file_flags = fcntl(fileno(frames_file), F_GETFL) | O_DSYNC | O_RSYNC;
+	fcntl(fileno(frames_file), F_SETFL, file_flags);
+
 	if (frames_file) {
 		while (pigeon_link_frames_has_next(pigeon_link)) {
 			PigeonFrame *pigeon_frame = pigeon_link_frames_pop(pigeon_link);
@@ -197,7 +203,10 @@ bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) 
 			}
 		}
 
+		fflush(frames_file);
 		fclose(frames_file);
+	} else {
+		perror("Error opening frames file");
 	}
 
 	return true;
@@ -207,7 +216,7 @@ bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link)
 	FILE *frames_file = fopen(linkmod_files->frames_file_path, "r+");
 
 	// TODO: We should probably move frames_file to another location in case
-	//       another program is still writing to it.
+	//       another program is writing to it for some reason.
 
 	if (frames_file) {
 		char raw_buffer[READ_BUFFER_SIZE];
