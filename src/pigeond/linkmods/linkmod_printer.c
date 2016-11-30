@@ -6,7 +6,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define PRINTER_FILE "./test.txt"
+//#define PRINTER_FILE "./test.txt"
+#define PRINTER_FILE "/dev/ttyO5"
 
 /**
  * A linkmod porovides an abstract interface for our modem to send and receive

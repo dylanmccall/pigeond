@@ -13,7 +13,7 @@
 #include "pigeon_frame.h"
 #include "pigeon_frame_pipe.h"
 
-#define PIGEON_LINK_MTU 300
+#define PIGEON_LINK_MTU 170
 
 typedef struct _PigeonLink PigeonLink;
 
