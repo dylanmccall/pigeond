@@ -66,7 +66,7 @@ bool pigeon_tunnel_init(PigeonTunnel *pigeon_tunnel) {
 	}
 
 	if (!error) {
-		struct ifreq ifr = {0};
+		struct ifreq ifr;
 		strncpy(ifr.ifr_name, pigeon_tunnel->dev_name_template, IFNAMSIZ);
 		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
 		if (ioctl(pigeon_tunnel->tun_fd, TUNSETIFF, (void *) &ifr) < 0) {
@@ -197,7 +197,7 @@ bool pigeon_tunnel_set_mtu(PigeonTunnel *pigeon_tunnel, int mtu) {
 	}
 
 	if (!error) {
-		struct ifreq ifr = {0};
+		struct ifreq ifr;
 		strncpy(ifr.ifr_name, pigeon_tunnel->dev_name, IFNAMSIZ);
 		ifr.ifr_addr.sa_family = AF_INET;
 		ifr.ifr_mtu = mtu;
@@ -212,7 +212,7 @@ bool pigeon_tunnel_set_mtu(PigeonTunnel *pigeon_tunnel, int mtu) {
 int pigeon_tunnel_get_mtu(PigeonTunnel *pigeon_tunnel) {
 	bool error = false;
 	int socket_fd;
-	struct ifreq ifr = {0};
+	struct ifreq ifr;
 
 	if (!error) {
 		socket_fd = socket(AF_INET, SOCK_DGRAM, 0);

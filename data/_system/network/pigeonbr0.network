@@ -1,0 +1,13 @@
+[Match]
+Name=pigeonbr0
+
+[Link]
+MTUBytes=170
+
+[Address]
+Address=192.168.10.1/24
+Gateway=192.168.10.1
+
+[Network]
+DHCPServer=yes
+MulticastDNS=resolve

@@ -1,0 +1,6 @@
+[NetDev]
+Name=pigeonbr0
+Kind=bridge
+
+[Link]
+MTUBytes=170

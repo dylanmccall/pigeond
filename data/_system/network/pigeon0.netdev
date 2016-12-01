@@ -1,0 +1,6 @@
+[NetDev]
+Name=pigeon0
+Kind=tap
+
+[Tap]
+PacketInfo=no

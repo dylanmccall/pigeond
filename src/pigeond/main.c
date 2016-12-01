@@ -100,10 +100,10 @@ int main() {
 		// TODO: We should also setuid to a non-privileged user.
 		// TODO: It would be good to enable seccomp earlier, but it causes
 		//       our thread start functions to deadlock.
-		// if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_STRICT) != 0) {
-		// 	perror("Error enabling seccomp");
-		// 	error = true;
-		// }
+		if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_STRICT) != 0) {
+			perror("Error enabling seccomp");
+			error = true;
+		}
 	}
 
 	if (!error) {

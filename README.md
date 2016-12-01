@@ -20,9 +20,17 @@ Finally, run pigeond and it will connect to the pigeon0 device.
 
 NodeJS-based web server that displays status information and provides some tools to manage pigeond.
 
-### Setup scripts
+### System setup
 
-We need to do some initial configuration to bridge network interfaces. This is probably best done in a little shell script somewhere. We might be able to polish it up later.
+Please install the Debian package, which includes systemd configuration for our virtual network device.
+
+In addition, you will need to disable connman's ownership of the eth0 interface. In /etc/connman/main.conf, change this line:
+
+    NetworkInterfaceBlacklist=usb0,SoftAp0
+
+... to include eth0:
+
+    NetworkInterfaceBlacklist=usb0,SoftAp0,eth0
 
 ## Authors
 

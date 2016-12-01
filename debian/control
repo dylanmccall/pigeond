@@ -1,0 +1,30 @@
+Source: pigeond
+Section: net
+Priority: extra
+Maintainer: Dylan McCall <dylan@affinitybridge.com>
+Build-Depends:
+ debhelper (>= 8.0.0),
+ bison,
+ flex,
+ libqrencode-dev,
+ libv4l-dev,
+ libzbar-dev
+Standards-Version: 3.9.6
+Homepage: http://www.sfu.ca
+
+Package: pigeond
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends:
+ udevil,
+ nodejs
+Description: Carrier pigeon modem software
+ (Long description of pigeond goes here)
+
+Package: pigeond-dbg
+Architecture: any
+Section: debug
+Depends: pigeond (= ${binary:Version}), ${misc:Depends}
+Recommends: gdb
+Description: Debugging symbols for pigeond
+ (Long description of pigeond goes here)

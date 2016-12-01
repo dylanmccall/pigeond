@@ -1,6 +1,14 @@
 /out
 /build
 
+debian/files
+debian/*.debhelper
+debian/*.log
+debian/*.substvars
+debian/debhelper-build-stamp
+debian/pigeond-dbg/*
+debian/pigeond/*
+
 # From https://github.com/github/gitignore/blob/master/C.gitignore
 
 # Prerequisites
