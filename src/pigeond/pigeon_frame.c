@@ -29,9 +29,14 @@ const EtherTypeInfo ETHER_TYPE_INFO[] = {
 	{ETHERTYPE_LOOPBACK, "LOOPBACK"}
 };
 
+const struct ether_addr BROADCAST_ETHER_ADDR = {
+	.ether_addr_octet={0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+};
+
 const size_t ETHER_TYPE_INFO_COUNT = sizeof(ETHER_TYPE_INFO) / sizeof(*ETHER_TYPE_INFO);
 
 const EtherTypeInfo *_pigeon_frame_get_ether_type_info(PigeonFrame *pigeon_frame);
+bool _ether_addr_matches(const struct ether_addr *addr_a, const struct ether_addr *addr_b);
 size_t _find_string(const unsigned char *data, size_t offset, size_t data_size);
 bool _eol_char(const unsigned char value);
 
@@ -93,6 +98,11 @@ size_t pigeon_frame_get_buffer(PigeonFrame *pigeon_frame, const unsigned char **
 size_t pigeon_frame_get_data(PigeonFrame *pigeon_frame, const unsigned char **out_data) {
 	*out_data = pigeon_frame->data;
 	return pigeon_frame->data_size;
+}
+
+bool pigeon_frame_is_broadcast(PigeonFrame *pigeon_frame) {
+	struct ether_addr *addr = (struct ether_addr *)pigeon_frame->header->ether_dhost;
+	return _ether_addr_matches(addr, &BROADCAST_ETHER_ADDR);
 }
 
 unsigned pigeon_frame_get_ethertype(PigeonFrame *pigeon_frame) {
@@ -167,6 +177,15 @@ const EtherTypeInfo *_pigeon_frame_get_ether_type_info(PigeonFrame *pigeon_frame
 	}
 
 	return NULL;
+}
+
+bool _ether_addr_matches(const struct ether_addr *addr_a, const struct ether_addr *addr_b) {
+	const u_int8_t *addr_a_octet = addr_a->ether_addr_octet;
+	const u_int8_t *addr_b_octet = addr_b->ether_addr_octet;
+	for (int i = 0; i < ETH_ALEN; i++) {
+		if (addr_a_octet[i] != addr_b_octet[i]) return false;
+	}
+	return true;
 }
 
 size_t _find_string(const unsigned char *data, size_t offset, size_t data_size) {

@@ -30,6 +30,8 @@ struct _PigeonTunnel {
 LongThreadResult _pigeon_tunnel_write_thread_loop(LongThread *long_thread, void *data);
 LongThreadResult _pigeon_tunnel_read_thread_loop(LongThread *long_thread, void *data);
 
+bool _pigeon_tunnel_is_frame_allowed(PigeonFrame *pigeon_frame, const char **out_reason);
+
 PigeonTunnel *pigeon_tunnel_new(const char *dev_name_template, PigeonFramePipeHandle frame_pipe_ref_tx) {
 	PigeonTunnel *pigeon_tunnel = malloc(sizeof(PigeonTunnel));
 	memset(pigeon_tunnel, 0, sizeof(*pigeon_tunnel));
@@ -299,14 +301,30 @@ LongThreadResult _pigeon_tunnel_read_thread_loop(LongThread *long_thread, void *
 	}
 
 	if (pigeon_frame != NULL) {
-		if (pigeon_frame_get_ethertype(pigeon_frame) == ETHERTYPE_IPV6) {
-			fprintf(stderr, "Ignoring IPv6 frame");
-			pigeon_frame_free(pigeon_frame);
-		} else {
+		const char *reject_reason;
+		bool is_allowed = _pigeon_tunnel_is_frame_allowed(pigeon_frame, &reject_reason);
+		if (is_allowed) {
 			fprintf(stderr, "tunnel-read: Sending next frame\n");
 			pigeon_tunnel_frames_push(pigeon_tunnel, pigeon_frame);
+		} else {
+			fprintf(stderr, "tunnel-read: Dropping frame: %s\n", reject_reason);
+			pigeon_frame_free(pigeon_frame);
 		}
 	}
 
 	return LONG_THREAD_CONTINUE;
+}
+
+bool _pigeon_tunnel_is_frame_allowed(PigeonFrame *pigeon_frame, const char **out_reason) {
+	bool is_broadcast = pigeon_frame_is_broadcast(pigeon_frame);
+	unsigned ethertype = pigeon_frame_get_ethertype(pigeon_frame);
+	if (ethertype == ETHERTYPE_IPV6) {
+		*out_reason = "IPv6 frame";
+		return false;
+	} else if (is_broadcast && ethertype == ETHERTYPE_IP) {
+		*out_reason = "IP broadcast frame";
+		return false;
+	} else {
+		return true;
+	}
 }
