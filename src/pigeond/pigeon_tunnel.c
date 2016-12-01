@@ -258,10 +258,10 @@ LongThreadResult _pigeon_tunnel_write_thread_loop(LongThread *long_thread, void 
 	PigeonFrame *pigeon_frame = pigeon_tunnel_frames_pop(pigeon_tunnel);
 
 	if (pigeon_frame) {
-		printf("tunnel-write: Got next frame\n");
+		fprintf(stderr, "tunnel-write: Received next frame\n");
 
-		pigeon_frame_print_header(pigeon_frame);
-		pigeon_frame_print_data(pigeon_frame);
+		// pigeon_frame_print_header(pigeon_frame);
+		// pigeon_frame_print_data(pigeon_frame);
 
 		const unsigned char *buffer;
 		size_t buffer_size = pigeon_frame_get_buffer(pigeon_frame, &buffer);
@@ -299,8 +299,13 @@ LongThreadResult _pigeon_tunnel_read_thread_loop(LongThread *long_thread, void *
 	}
 
 	if (pigeon_frame != NULL) {
-		printf("tunnel-read: Sending next frame\n");
-		pigeon_tunnel_frames_push(pigeon_tunnel, pigeon_frame);
+		if (pigeon_frame_get_ethertype(pigeon_frame) == ETHERTYPE_IPV6) {
+			fprintf(stderr, "Ignoring IPv6 frame");
+			pigeon_frame_free(pigeon_frame);
+		} else {
+			fprintf(stderr, "tunnel-read: Sending next frame\n");
+			pigeon_tunnel_frames_push(pigeon_tunnel, pigeon_frame);
+		}
 	}
 
 	return LONG_THREAD_CONTINUE;

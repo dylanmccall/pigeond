@@ -95,6 +95,10 @@ size_t pigeon_frame_get_data(PigeonFrame *pigeon_frame, const unsigned char **ou
 	return pigeon_frame->data_size;
 }
 
+unsigned pigeon_frame_get_ethertype(PigeonFrame *pigeon_frame) {
+	return ntohs(pigeon_frame->header->ether_type);
+}
+
 void pigeon_frame_print_header(PigeonFrame *pigeon_frame) {
 	if (pigeon_frame->header) {
 		const EtherTypeInfo *ether_type_info = _pigeon_frame_get_ether_type_info(pigeon_frame);

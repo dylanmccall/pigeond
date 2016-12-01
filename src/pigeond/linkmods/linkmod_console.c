@@ -102,7 +102,7 @@ LongThreadResult _linkmod_console_tx_thread_loop(LongThread *long_thread, void *
 	PigeonFrame *pigeon_frame = pigeon_link_frames_pop(pigeon_link);
 
 	if (pigeon_frame) {
-		printf("linkmod-console-tx: Got next frame\n");
+		fprintf(stderr, "linkmod-console-tx: Got next frame\n");
 		pigeon_frame_print_header(pigeon_frame);
 		pigeon_frame_print_data(pigeon_frame);
 		pigeon_frame_free(pigeon_frame);

@@ -113,7 +113,7 @@ LongThreadResult _linkmod_printer_tx_thread_loop(LongThread *long_thread, void *
 	PigeonFrame *pigeon_frame = pigeon_link_frames_pop(pigeon_link);
 
 	if (pigeon_frame) {
-		printf("Printing frame\n");
+		fprintf(stderr, "Printing frame\n");
 		const unsigned char *toPrint;
 		size_t toPrintLength = pigeon_frame_get_buffer(pigeon_frame, &toPrint);
 		printer_printQRCode(linkmod_printer->fileDescriptor, toPrint, (int)toPrintLength);

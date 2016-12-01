@@ -160,12 +160,12 @@ LongThreadResult _linkmod_files_tx_thread_loop(LongThread *long_thread, void *da
 
 	if (files_dir && !linkmod_files->transfer_complete) {
 		// There might be files available to read.
-		printf("Device connected. Writing frames...\n");
+		fprintf(stderr, "Device connected. Writing frames...\n");
 		_push_to_frames_file(linkmod_files, pigeon_link);
 		closedir(files_dir);
 	} else if (!files_dir && linkmod_files->transfer_complete) {
 		// Once the device is removed, we should be ready to transfer files again
-		printf("Device removed.\n");
+		fprintf(stderr, "Device removed.\n");
 		linkmod_files->transfer_complete = false;
 	}
 
@@ -205,7 +205,7 @@ bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) 
 		if (pigeon_frame) {
 			if (_pigeon_frame_to_file(linkmod_files->base64, pigeon_frame, frames_file)) {
 				// Frame was written successfully. Yay! Count this one.
-				printf("Wrote frame to file\n");
+				fprintf(stderr, "Wrote frame to file\n");
 				if (frames_count == 0) {
 					// Start counting to MAX_WRITE_COUNT from the first frame
 					transfer_start_time = now_time;
@@ -213,7 +213,7 @@ bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) 
 				frames_count += 1;
 			} else {
 				// If anything goes wrong, exit.
-				printf("Something went wrong :(\n");
+				fprintf(stderr, "Something went wrong :(\n");
 				error = true;
 			}
 		}
@@ -235,10 +235,10 @@ bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) 
 	}
 
 	if (linkmod_files->transfer_complete) {
-		printf("Finished writing frames to file\n");
+		fprintf(stderr, "Finished writing frames to file\n");
 		// TODOO: This is a good place to make a beep sound.
 	} else if (error) {
-		printf("Cancelled writing frames to file\n");
+		fprintf(stderr, "Cancelled writing frames to file\n");
 		linkmod_files->transfer_complete = true;
 		// TODO: And another beep sound.
 	}
