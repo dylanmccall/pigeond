@@ -5,6 +5,7 @@
 #include "../printer.h"
 #include <unistd.h>
 #include <fcntl.h>
+#include "../audioMixer.h"
 
 //#define PRINTER_FILE "./test.txt"
 #define PRINTER_FILE "/dev/ttyO5"
@@ -26,6 +27,7 @@
 typedef struct {
 	PigeonLinkmod public;
 	int fileDescriptor;
+	wavedata_t *testSound;
 } LinkmodPrinter;
 
 bool _linkmod_printer_tx_thread_start(LongThread *long_thread, void *data);
@@ -38,12 +40,13 @@ LongThreadResult _linkmod_printer_tx_thread_loop(LongThread *long_thread, void *
  * that says it is available.
  */
 bool linkmod_printer_tx_is_available() {
-	if( access(PRINTER_FILE, F_OK) != -1) {
-		return true;
-	}
-	else {
-		return false;
-	}
+	return true;
+	// if( access(PRINTER_FILE, F_OK) != -1) {
+	// 	return true;
+	// }
+	// else {
+	// 	return false;
+	// }
 }
 
 /**
@@ -61,7 +64,8 @@ PigeonLinkmod *linkmod_printer_tx_new() {
 		.stop_fn=_linkmod_printer_tx_thread_stop,
 		.loop_fn=_linkmod_printer_tx_thread_loop,
 		.data=linkmod_printer
-	});
+	}); 
+	linkmod_printer->testSound = malloc(sizeof(wavedata_t));
 	return (PigeonLinkmod *)linkmod_printer;
 }
 
@@ -83,6 +87,7 @@ bool _linkmod_printer_tx_thread_start(LongThread *long_thread, void *data) {
 	if (!error) {
 		// Any expensive initialization. (Open files, etc.).
 		linkmod_printer->fileDescriptor = open(PRINTER_FILE, O_WRONLY | O_NOCTTY | O_NDELAY);
+		AudioMixer_readWaveFileIntoMemory("data/SoundEffects/testSound.wav", linkmod_printer->testSound);
 	}
 
 	return !error;
@@ -96,6 +101,7 @@ bool _linkmod_printer_tx_thread_stop(LongThread *long_thread, void *data) {
 	if (!error) {
 		// Close files opened in _linkmod_console_tx_thread_start.
 		close(linkmod_printer->fileDescriptor);
+		AudioMixer_freeWaveFileData(linkmod_printer->testSound);
 	}
 
 	return !error;
@@ -116,6 +122,7 @@ LongThreadResult _linkmod_printer_tx_thread_loop(LongThread *long_thread, void *
 		fprintf(stderr, "Printing frame\n");
 		const unsigned char *toPrint;
 		size_t toPrintLength = pigeon_frame_get_buffer(pigeon_frame, &toPrint);
+		AudioMixer_queueSound(linkmod_printer->testSound);
 		printer_printQRCode(linkmod_printer->fileDescriptor, toPrint, (int)toPrintLength);
 		//pigeon_frame_print_header(pigeon_frame);
 		//pigeon_frame_print_data(pigeon_frame);

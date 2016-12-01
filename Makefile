@@ -20,6 +20,7 @@ OBJS_pigeond = \
 	pigeond/pigeon_link.o \
 	pigeond/pigeon_linkmod.o \
 	pigeond/pigeon_tunnel.o \
+	pigeond/audioMixer.o \
 	pigeond/pointer_fifo.o \
 	pigeond/printer.o \
 	pigeond/util.o
@@ -43,7 +44,7 @@ CC ?= gcc
 CC_armhf ?= arm-linux-gnueabihf-gcc
 CFLAGS ?= -g -Wall -Werror -std=c99 -D _POSIX_C_SOURCE=200809L
 CFLAGS_armhf ?= $(CFLAGS) -I ./includes_armhf
-LDFLAGS ?= -lm -lpthread -lqrencode
+LDFLAGS ?= -lm -lpthread -lqrencode -lasound
 LDFLAGS_armhf ?= $(LDFLAGS) -L ./libs_armhf
 
 include Makefile.base

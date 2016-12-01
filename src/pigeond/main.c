@@ -10,6 +10,7 @@
 #include "pigeon_frame_pipe.h"
 #include "pigeon_link.h"
 #include "pigeon_tunnel.h"
+#include "audioMixer.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -42,6 +43,8 @@ int main() {
 		pigeon_frame_pipe_get_rx(pigeon_frame_pipe)
 	);
 
+	AudioMixer_init();
+	
 	command_runner = command_runner_new();
 
 	command_server = command_server_new(command_runner);
