@@ -24,7 +24,7 @@ static short *playbackBuffer = NULL;
 
 
 // Currently active (waiting to be played) sound bites
-#define MAX_SOUND_BITES 30
+#define MAX_SOUND_BITES 1
 typedef struct {
 	// A pointer to a previously allocated sound bite (wavedata_t struct).
 	// Note that many different sound-bite slots could share the same pointer
