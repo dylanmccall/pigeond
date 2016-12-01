@@ -1,2 +1,2 @@
 out/default/pigeond usr/bin
-data/_system/network/* etc/systemd/network
+data/_system/network/10-pigeon-bridge.conf etc/network/interfaces.d

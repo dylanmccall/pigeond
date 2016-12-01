@@ -1,8 +1,6 @@
 [Unit]
 Description=Carrier pigeon modem software
 Documentation=man:pigeond(1)
-Wants=pigeon0.network
-Wants=pigeonbr0.network
 Wants=devmon.service
 
 [Service]
