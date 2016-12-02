@@ -76,6 +76,8 @@ PigeonLinkmod *linkmod_printer_tx_new() {
 void linkmod_printer_tx_free(PigeonLinkmod *linkmod) {
 	LinkmodPrinter *linkmod_printer = (LinkmodPrinter *)linkmod;
 	long_thread_free(linkmod_printer->public.long_thread);
+	AudioMixer_freeWaveFileData(linkmod_printer->testSound);
+	free(linkmod_printer->testSound);
 	free(linkmod_printer);
 }
 

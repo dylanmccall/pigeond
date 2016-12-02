@@ -164,7 +164,7 @@ void printBitmap(int fileDescriptor, unsigned char* input, int rows, int columns
     }
   }
 
-  write(fileDescriptor, "\n", 1);
+  write(fileDescriptor, "\n\n\n", 2);
 }
 
 

@@ -11,6 +11,7 @@
 #include <sys/inotify.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "../audioMixer.h"
 
 // TODO: It would be way better to use udisk for this, since it provides event
 //       callbacks for directories being mounted. Alas, opendir is much, much
@@ -48,6 +49,7 @@ typedef struct {
 	char *frames_file_path;
 	Base64 *base64;
 	bool transfer_complete;
+	wavedata_t *beep;
 } LinkmodFiles;
 
 bool _linkmod_files_thread_start(LongThread *long_thread, void *data);
@@ -72,6 +74,7 @@ PigeonLinkmod *linkmod_files_tx_new() {
 	memset(linkmod_files, 0, sizeof(*linkmod_files));
 	linkmod_files->base64 = base64_new();
 	linkmod_files->files_dir_path = getenv(FILES_DIR_TX_VAR_NAME);
+	linkmod_files->beep = malloc(sizeof(wavedata_t));
 	linkmod_files->public.long_thread = long_thread_new((LongThreadOptions){
 		.name="linkmod-console-tx",
 		.start_fn=_linkmod_files_thread_start,
@@ -86,6 +89,8 @@ void linkmod_files_tx_free(PigeonLinkmod *linkmod) {
 	LinkmodFiles *linkmod_files = (LinkmodFiles *)linkmod;
 	long_thread_free(linkmod_files->public.long_thread);
 	base64_free(linkmod_files->base64);
+	AudioMixer_freeWaveFileData(linkmod_files->beep);
+	free(linkmod_files->beep);
 	free(linkmod_files);
 }
 
@@ -129,6 +134,7 @@ bool _linkmod_files_thread_start(LongThread *long_thread, void *data) {
 			FRAMES_TX_FILE_NAME,
 			strlen(FRAMES_TX_FILE_NAME)
 		);
+		AudioMixer_readWaveFileIntoMemory("data/SoundEffects/beep.wav", linkmod_files->beep);
 		error = linkmod_files->frames_file_path == NULL;
 	}
 
@@ -236,10 +242,11 @@ bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) 
 
 	if (linkmod_files->transfer_complete) {
 		fprintf(stderr, "Finished writing frames to file\n");
-		// TODOO: This is a good place to make a beep sound.
+		AudioMixer_queueSound(linkmod_files->beep);
 	} else if (error) {
 		fprintf(stderr, "Cancelled writing frames to file\n");
 		linkmod_files->transfer_complete = true;
+		AudioMixer_queueSound(linkmod_files->beep);
 		// TODO: And another beep sound.
 	}
 
