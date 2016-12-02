@@ -202,7 +202,7 @@ char* bar_code_read() {
     char c;                         // char buffer
 
 
-    system("zbarimg -q output_image.ppm >> temp.txt");      // call dir and put it's contents in a temp using redirects.
+    system("zbarimg -q output_image.ppm | cut -d: -f2- >> temp.txt");      // call dir and put it's contents in a temp using redirects.
     fptr = fopen("temp.txt", "r");  // open said file for reading.
                                     // oh, and check for fptr being NULL.
 
