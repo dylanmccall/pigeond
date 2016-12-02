@@ -220,12 +220,14 @@ char* bar_code_read() {
     rewind(input_file);
     if (input_file_size == 0){
         remove("temp.txt");
+        remove("output_image.ppm");        
         return NULL;
     }
     file_contents = malloc(input_file_size * (sizeof(char)));
     fread(file_contents, sizeof(char), input_file_size, input_file);
     fclose(input_file);
     remove("temp.txt");
+    remove("output_image.ppm");
     return file_contents;
 
 }
