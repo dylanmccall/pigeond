@@ -58,6 +58,7 @@ bool linkmod_printer_tx_is_available() {
 PigeonLinkmod *linkmod_printer_tx_new() {
 	LinkmodPrinter *linkmod_printer = malloc(sizeof(LinkmodPrinter));
 	memset(linkmod_printer, 0, sizeof(*linkmod_printer));
+	linkmod_printer->testSound = AudioMixer_waveData_new();
 	linkmod_printer->public.long_thread = long_thread_new((LongThreadOptions){
 		.name="linkmod-printer-tx",
 		.start_fn=_linkmod_printer_tx_thread_start,
@@ -65,7 +66,6 @@ PigeonLinkmod *linkmod_printer_tx_new() {
 		.loop_fn=_linkmod_printer_tx_thread_loop,
 		.data=linkmod_printer
 	}); 
-	linkmod_printer->testSound = malloc(sizeof(wavedata_t));
 	return (PigeonLinkmod *)linkmod_printer;
 }
 
@@ -76,8 +76,7 @@ PigeonLinkmod *linkmod_printer_tx_new() {
 void linkmod_printer_tx_free(PigeonLinkmod *linkmod) {
 	LinkmodPrinter *linkmod_printer = (LinkmodPrinter *)linkmod;
 	long_thread_free(linkmod_printer->public.long_thread);
-	AudioMixer_freeWaveFileData(linkmod_printer->testSound);
-	free(linkmod_printer->testSound);
+	AudioMixer_waveData_free(linkmod_printer->testSound);
 	free(linkmod_printer);
 }
 

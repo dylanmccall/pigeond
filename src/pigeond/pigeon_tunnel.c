@@ -319,10 +319,10 @@ bool _pigeon_tunnel_is_frame_allowed(PigeonFrame *pigeon_frame, const char **out
 	bool is_broadcast = pigeon_frame_is_broadcast(pigeon_frame);
 	unsigned ethertype = pigeon_frame_get_ethertype(pigeon_frame);
 	if (ethertype == ETHERTYPE_IPV6) {
-		*out_reason = "IPv6 frame";
+		*out_reason = "IPv6";
 		return false;
-	} else if (is_broadcast && ethertype == ETHERTYPE_IP) {
-		*out_reason = "IP broadcast frame";
+	} else if (is_broadcast && ethertype != ETHERTYPE_ARP) {
+		*out_reason = "Non-ARP broadcast";
 		return false;
 	} else {
 		return true;

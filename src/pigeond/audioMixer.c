@@ -8,6 +8,10 @@
 #include <limits.h>
 #include <alloca.h> // needed for mixer
 
+struct _wavedata_t {
+	int numSamples;
+	short *pData;
+};
 
 static snd_pcm_t *handle;
 
@@ -91,6 +95,17 @@ void AudioMixer_init(void)
 
 	// Launch playback thread:
 	pthread_create(&playbackThreadId, NULL, playbackThread, NULL);
+}
+
+wavedata_t *AudioMixer_waveData_new() {
+	wavedata_t *pSound = malloc(sizeof(wavedata_t));
+	memset(pSound, 0, sizeof(*pSound));
+	return pSound;
+}
+
+void AudioMixer_waveData_free(wavedata_t *pSound) {
+	AudioMixer_freeWaveFileData(pSound);
+	free(pSound);
 }
 
 
@@ -233,8 +248,10 @@ void AudioMixer_setVolume(int newVolume)
     snd_mixer_selem_id_set_name(sid, selem_name);
     snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
 
-    snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-    snd_mixer_selem_set_playback_volume_all(elem, max);
+    if (elem) {
+	    snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+	    snd_mixer_selem_set_playback_volume_all(elem, max);
+	}
 
     snd_mixer_close(handle);
 }

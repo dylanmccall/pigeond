@@ -74,7 +74,7 @@ PigeonLinkmod *linkmod_files_tx_new() {
 	memset(linkmod_files, 0, sizeof(*linkmod_files));
 	linkmod_files->base64 = base64_new();
 	linkmod_files->files_dir_path = getenv(FILES_DIR_TX_VAR_NAME);
-	linkmod_files->beep = malloc(sizeof(wavedata_t));
+	linkmod_files->beep = AudioMixer_waveData_new();
 	linkmod_files->public.long_thread = long_thread_new((LongThreadOptions){
 		.name="linkmod-console-tx",
 		.start_fn=_linkmod_files_thread_start,
@@ -89,8 +89,7 @@ void linkmod_files_tx_free(PigeonLinkmod *linkmod) {
 	LinkmodFiles *linkmod_files = (LinkmodFiles *)linkmod;
 	long_thread_free(linkmod_files->public.long_thread);
 	base64_free(linkmod_files->base64);
-	AudioMixer_freeWaveFileData(linkmod_files->beep);
-	free(linkmod_files->beep);
+	AudioMixer_waveData_free(linkmod_files->beep);
 	free(linkmod_files);
 }
 

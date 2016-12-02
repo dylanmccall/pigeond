@@ -3,10 +3,7 @@
 #ifndef AUDIO_MIXER_H
 #define AUDIO_MIXER_H
 
-typedef struct {
-	int numSamples;
-	short *pData;
-} wavedata_t;
+typedef struct _wavedata_t wavedata_t;
 
 #define AUDIOMIXER_MAX_VOLUME 100
 
@@ -14,6 +11,10 @@ typedef struct {
 // cleanup() must be called last to stop playback threads and free memory.
 void AudioMixer_init(void);
 void AudioMixer_cleanup(void);
+
+wavedata_t *AudioMixer_waveData_new();
+void AudioMixer_waveData_free(wavedata_t *pSound);
+
 
 // Read the contents of a wave file into the pSound structure. Note that
 // the pData pointer in this structure will be dynamically allocated in
