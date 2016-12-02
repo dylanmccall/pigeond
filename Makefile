@@ -4,23 +4,26 @@ BINS := pigeond pigeon_admin
 
 OBJS_pigeond = \
 	pigeond/main.o \
+	pigeond/audioMixer.o \
 	pigeond/base64.o \
+	pigeond/beagle_display.o \
 	pigeond/beagle_joystick.o \
 	pigeond/command_runner.o \
 	pigeond/command_server.o \
 	pigeond/debounce.o \
+	pigeond/fsd_char.o \
 	pigeond/gpio.o \
 	pigeond/linkmods/linkmod_console.o \
 	pigeond/linkmods/linkmod_files.o \
-	pigeond/linkmods/linkmod_printer.o \
 	pigeond/linkmods/linkmod_null.o \
+	pigeond/linkmods/linkmod_printer.o \
 	pigeond/long_thread.o \
 	pigeond/pigeon_frame.o \
 	pigeond/pigeon_frame_pipe.o \
 	pigeond/pigeon_link.o \
 	pigeond/pigeon_linkmod.o \
 	pigeond/pigeon_tunnel.o \
-	pigeond/audioMixer.o \
+	pigeond/pigeon_ui.o \
 	pigeond/pointer_fifo.o \
 	pigeond/printer.o \
 	pigeond/util.o

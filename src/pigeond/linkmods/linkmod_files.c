@@ -1,7 +1,8 @@
 #include "linkmod_files.h"
 
-#include "../util.h"
 #include "../base64.h"
+#include "../pigeon_ui.h"
+#include "../util.h"
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -11,7 +12,6 @@
 #include <sys/inotify.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "../audioMixer.h"
 
 // TODO: It would be way better to use udisk for this, since it provides event
 //       callbacks for directories being mounted. Alas, opendir is much, much
@@ -49,7 +49,6 @@ typedef struct {
 	char *frames_file_path;
 	Base64 *base64;
 	bool transfer_complete;
-	wavedata_t *beep;
 } LinkmodFiles;
 
 bool _linkmod_files_thread_start(LongThread *long_thread, void *data);
@@ -64,6 +63,7 @@ bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link)
 unsigned char *_pigeon_frame_to_b64(Base64 *base64, PigeonFrame *pigeon_frame, size_t *out_b64_buffer_size);
 bool _pigeon_frame_to_file(Base64 *base64, PigeonFrame *pigeon_frame, FILE *file);
 PigeonFrame *_b64_to_pigeon_frame(Base64 *base64, const unsigned char *b64_buffer, size_t b64_buffer_size);
+FILE *_fopen_with_sync(const char *path, const char *mode);
 
 bool linkmod_files_tx_is_available() {
 	return getenv(FILES_DIR_TX_VAR_NAME) != NULL;
@@ -74,7 +74,6 @@ PigeonLinkmod *linkmod_files_tx_new() {
 	memset(linkmod_files, 0, sizeof(*linkmod_files));
 	linkmod_files->base64 = base64_new();
 	linkmod_files->files_dir_path = getenv(FILES_DIR_TX_VAR_NAME);
-	linkmod_files->beep = AudioMixer_waveData_new();
 	linkmod_files->public.long_thread = long_thread_new((LongThreadOptions){
 		.name="linkmod-console-tx",
 		.start_fn=_linkmod_files_thread_start,
@@ -89,7 +88,6 @@ void linkmod_files_tx_free(PigeonLinkmod *linkmod) {
 	LinkmodFiles *linkmod_files = (LinkmodFiles *)linkmod;
 	long_thread_free(linkmod_files->public.long_thread);
 	base64_free(linkmod_files->base64);
-	AudioMixer_waveData_free(linkmod_files->beep);
 	free(linkmod_files);
 }
 
@@ -133,7 +131,6 @@ bool _linkmod_files_thread_start(LongThread *long_thread, void *data) {
 			FRAMES_TX_FILE_NAME,
 			strlen(FRAMES_TX_FILE_NAME)
 		);
-		AudioMixer_readWaveFileIntoMemory("data/SoundEffects/beep.wav", linkmod_files->beep);
 		error = linkmod_files->frames_file_path == NULL;
 	}
 
@@ -172,6 +169,7 @@ LongThreadResult _linkmod_files_tx_thread_loop(LongThread *long_thread, void *da
 		// Once the device is removed, we should be ready to transfer files again
 		fprintf(stderr, "Device removed.\n");
 		linkmod_files->transfer_complete = false;
+		pigeon_ui_action(UI_ACTION_TX_SUCCESS);
 	}
 
 	nanosleep(&FILES_DIR_POLL_DELAY, NULL);
@@ -181,14 +179,11 @@ LongThreadResult _linkmod_files_tx_thread_loop(LongThread *long_thread, void *da
 
 bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) {
 	// It is important that we open the file with O_SYNC so changes are committed to disk.
-	FILE *frames_file = fopen(linkmod_files->frames_file_path, "a");
+	FILE *frames_file = _fopen_with_sync(linkmod_files->frames_file_path, "a");
 
 	if (frames_file == NULL) {
 		perror("Error opening frames file");
 		return false;
-	} else {
-		int file_flags = fcntl(fileno(frames_file), F_GETFL) | O_DSYNC | O_RSYNC;
-		fcntl(fileno(frames_file), F_SETFL, file_flags);
 	}
 
 	struct timespec transfer_start_time = {0, 0};
@@ -208,6 +203,8 @@ bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) 
 		clock_gettime(CLOCK_MONOTONIC, &now_time);
 
 		if (pigeon_frame) {
+			pigeon_ui_action(UI_ACTION_TX_BUSY);
+
 			if (_pigeon_frame_to_file(linkmod_files->base64, pigeon_frame, frames_file)) {
 				// Frame was written successfully. Yay! Count this one.
 				fprintf(stderr, "Wrote frame to file\n");
@@ -241,12 +238,11 @@ bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) 
 
 	if (linkmod_files->transfer_complete) {
 		fprintf(stderr, "Finished writing frames to file\n");
-		AudioMixer_queueSound(linkmod_files->beep);
+		pigeon_ui_action(UI_ACTION_TX_WAITING);
 	} else if (error) {
 		fprintf(stderr, "Cancelled writing frames to file\n");
 		linkmod_files->transfer_complete = true;
-		AudioMixer_queueSound(linkmod_files->beep);
-		// TODO: And another beep sound.
+		pigeon_ui_action(UI_ACTION_TX_ERROR);
 	}
 
 	return !error;
@@ -274,32 +270,40 @@ LongThreadResult _linkmod_files_rx_thread_loop(LongThread *long_thread, void *da
 bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) {
 	FILE *frames_file = fopen(linkmod_files->frames_file_path, "r+");
 
-	// TODO: We should probably move frames_file to another location in case
-	//       another program is writing to it for some reason.
+	if (frames_file == NULL) {
+		perror("Error opening frames file");
+	}
 
-	if (frames_file) {
-		char raw_buffer[READ_BUFFER_SIZE];
+	char raw_buffer[READ_BUFFER_SIZE];
 
-		while (fgets(raw_buffer, sizeof(raw_buffer), frames_file)) {
-			int line_length = strlen(raw_buffer);
-			if (line_length > 0 && raw_buffer[line_length-1] == '\n') {
-				// Remove \n from the end of each line. (It was added by us).
-				line_length -= 1;
-				PigeonFrame *pigeon_frame = _b64_to_pigeon_frame(linkmod_files->base64, (unsigned char *)raw_buffer, line_length);
-				if (pigeon_frame != NULL) {
-					pigeon_link_frames_push(pigeon_link, pigeon_frame);
-				}
-			} else if (line_length > 0) {
-				// This line is probably too long. That can't be good :(
-				break;
+	pigeon_ui_action(UI_ACTION_RX_BUSY);
+
+	while (fgets(raw_buffer, sizeof(raw_buffer), frames_file)) {
+		int line_length = strlen(raw_buffer);
+		if (line_length > 0 && raw_buffer[line_length-1] == '\n') {
+			// Remove \n from the end of each line. (It was added by us).
+			line_length -= 1;
+			PigeonFrame *pigeon_frame = _b64_to_pigeon_frame(linkmod_files->base64, (unsigned char *)raw_buffer, line_length);
+			if (pigeon_frame != NULL) {
+				pigeon_link_frames_push(pigeon_link, pigeon_frame);
 			}
+		} else if (line_length > 0) {
+			// This line is probably too long. That can't be good :(
+			break;
 		}
+	}
 
-		// Re-open the file to clear its contents
-		frames_file = freopen(linkmod_files->frames_file_path, "w", frames_file);
+	fclose(frames_file);
 
+	// Re-open the file to clear its contents
+	frames_file = _fopen_with_sync(linkmod_files->frames_file_path, "w");
+
+	if (frames_file != NULL) {
+		fflush(frames_file);
 		fclose(frames_file);
 	}
+
+	pigeon_ui_action(UI_ACTION_RX_SUCCESS);
 
 	return true;
 }
@@ -346,4 +350,15 @@ PigeonFrame *_b64_to_pigeon_frame(Base64 *base64, const unsigned char *b64_buffe
 	PigeonFrame *pigeon_frame = pigeon_frame_new(decode_buffer, decode_buffer_size);
 	free(decode_buffer);
 	return pigeon_frame;
+}
+
+FILE *_fopen_with_sync(const char *path, const char *mode) {
+	FILE *file = fopen(path, mode);
+
+	if (file != NULL) {
+		int file_flags = fcntl(fileno(file), F_GETFL) | O_DSYNC | O_RSYNC;
+		fcntl(fileno(file), F_SETFL, file_flags);
+	}
+
+	return file;
 }

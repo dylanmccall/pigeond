@@ -16,7 +16,7 @@ Package: pigeond
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends:
- udevil,
+ usbmount,
  nodejs
 Description: Carrier pigeon modem software
  (Long description of pigeond goes here)

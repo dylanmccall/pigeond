@@ -24,7 +24,16 @@ NodeJS-based web server that displays status information and provides some tools
 
 Please install the Debian package, which includes a systemd init script for pigeond. Unfortunately, the rest of the configuration is manual...
 
-First, we need to stop eth0 from being assigned an IP address. To do this, disable connman's ownership of the eth0 interface. In /etc/connman/main.conf, change this line:
+First, we need to enable the BB-BONE-AUDI-02 and BB-I2CI capes at startup. Edit /etc/default/capemgr and add this line:
+
+    CAPE=BB-BONE-AUDI-02 BB-I2C1
+
+If you need to use the file transfer mode, we should set an environment variable for pigeond with a location where a device will *reliably* appear. Edit /etc/defaults/pigeond with something like this:
+
+    PIGEOND_FILES_TX=/var/run/usbmount/General_UDisk/myname
+    PIGEOND_FILES_RX=/var/run/usbmount/General_UDisk/remotename
+
+For our bridge interface to work, we need to stop eth0 from being assigned an IP address. To do this, disable connman's ownership of the eth0 interface. In /etc/connman/main.conf, change this line:
 
     NetworkInterfaceBlacklist=usb0,SoftAp0
 

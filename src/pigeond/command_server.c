@@ -14,12 +14,11 @@ struct _CommandServer {
 	char response_buffer[COMMAND_SERVER_RESPONSE_BUFFER_LENGTH+1];
 };
 
-void *_command_server_thread(void *arg);
-int _get_tokens(char *command, char **tokens, int buffer_size);
-
 bool _command_server_thread_start(LongThread *long_thread, void *data);
 bool _command_server_thread_stop(LongThread *long_thread, void *data);
 LongThreadResult _command_server_thread_loop(LongThread *long_thread, void *data);
+
+int _get_tokens(char *command, char **tokens, int buffer_size);
 
 CommandServer *command_server_new(CommandRunner *command_runner) {
 	CommandServer *command_server = malloc(sizeof(CommandServer));
