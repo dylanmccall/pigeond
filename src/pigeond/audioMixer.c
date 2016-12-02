@@ -69,7 +69,8 @@ void AudioMixer_init(void)
 	int err = snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
 	if (err < 0) {
 		printf("Playback open error: %s\n", snd_strerror(err));
-		exit(EXIT_FAILURE);
+		return;
+		// exit(EXIT_FAILURE);
 	}
 
 	// Configure parameters of PCM output
@@ -82,7 +83,8 @@ void AudioMixer_init(void)
 			50000);		// 0.05 seconds per buffer
 	if (err < 0) {
 		printf("Playback open error: %s\n", snd_strerror(err));
-		exit(EXIT_FAILURE);
+		return;
+		// exit(EXIT_FAILURE);
 	}
 
 	// Allocate this software's playback buffer to be the same size as the

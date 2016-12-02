@@ -40,13 +40,12 @@ LongThreadResult _linkmod_printer_tx_thread_loop(LongThread *long_thread, void *
  * that says it is available.
  */
 bool linkmod_printer_tx_is_available() {
-	return true;
-	// if( access(PRINTER_FILE, F_OK) != -1) {
-	// 	return true;
-	// }
-	// else {
-	// 	return false;
-	// }
+	if( access(PRINTER_FILE, F_OK) != -1) {
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 /**
