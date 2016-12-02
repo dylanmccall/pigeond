@@ -21,7 +21,8 @@ typedef enum {
 	UI_ACTION_TX_BUSY_SLOW,
 	UI_ACTION_TX_WAITING,
 	UI_ACTION_TX_SUCCESS,
-	UI_ACTION_TX_ERROR
+	UI_ACTION_TX_ERROR,
+	UI_ACTION_TX_RESET
 } PigeonUIAction;
 
 void pigeon_ui_init();
@@ -32,5 +33,6 @@ void pigeon_ui_stop();
 void pigeon_ui_action(PigeonUIAction action);
 void pigeon_ui_set_flash_str(const char *output, int time_seconds);
 void pigeon_ui_set_display_count(int count);
+bool pigeon_ui_is_reset_pressed();
 
 #endif

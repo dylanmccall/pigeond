@@ -47,6 +47,11 @@ void *pointer_fifo_pop(PointerFifo *fifo) {
 	}
 }
 
+void pointer_fifo_clear(PointerFifo *fifo) {
+	fifo->head = 0;
+	fifo->tail = 0;
+}
+
 size_t pointer_fifo_count(PointerFifo *fifo) {
 	size_t head = fifo->head;
 	size_t tail = fifo->tail;

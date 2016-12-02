@@ -1,7 +1,7 @@
 [Unit]
 Description=Carrier pigeon modem software
 Documentation=man:pigeond(1)
-Wants=devmon.service
+Wants=capemgr.service
 
 [Service]
 ExecStart=/usr/bin/pigeond

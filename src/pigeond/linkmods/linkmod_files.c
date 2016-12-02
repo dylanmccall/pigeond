@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/inotify.h>
+#include <sys/mount.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -26,7 +27,7 @@
 
 #define FILES_DIR_TX_VAR_NAME "PIGEOND_FILES_TX"
 #define FILES_DIR_RX_VAR_NAME "PIGEOND_FILES_RX"
-#define FRAMES_TX_FILE_NAME ".pigeond.frames.tx"
+#define FRAMES_FILE_NAME ".pigeond.frames.tx"
 
 #define MAX_WRITE_COUNT 1000
 #define MAX_WRITE_TIME_MS 10 * SECONDS_IN_MILLISECONDS
@@ -45,7 +46,7 @@ static struct timespec FRAMES_POLL_DELAY = {
 
 typedef struct {
 	PigeonLinkmod public;
-	const char *files_dir_path;
+	const char *files_dir_name;
 	char *frames_file_path;
 	Base64 *base64;
 	bool transfer_complete;
@@ -55,10 +56,10 @@ bool _linkmod_files_thread_start(LongThread *long_thread, void *data);
 bool _linkmod_files_thread_stop(LongThread *long_thread, void *data);
 
 LongThreadResult _linkmod_files_tx_thread_loop(LongThread *long_thread, void *data);
-bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link);
+bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link, DIR *files_dir);
 
 LongThreadResult _linkmod_files_rx_thread_loop(LongThread *long_thread, void *data);
-bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link);
+bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link, DIR *files_dir);
 
 unsigned char *_pigeon_frame_to_b64(Base64 *base64, PigeonFrame *pigeon_frame, size_t *out_b64_buffer_size);
 bool _pigeon_frame_to_file(Base64 *base64, PigeonFrame *pigeon_frame, FILE *file);
@@ -73,7 +74,7 @@ PigeonLinkmod *linkmod_files_tx_new() {
 	LinkmodFiles *linkmod_files = malloc(sizeof(LinkmodFiles));
 	memset(linkmod_files, 0, sizeof(*linkmod_files));
 	linkmod_files->base64 = base64_new();
-	linkmod_files->files_dir_path = getenv(FILES_DIR_TX_VAR_NAME);
+	linkmod_files->files_dir_name = getenv(FILES_DIR_TX_VAR_NAME);
 	linkmod_files->public.long_thread = long_thread_new((LongThreadOptions){
 		.name="linkmod-console-tx",
 		.start_fn=_linkmod_files_thread_start,
@@ -99,7 +100,7 @@ PigeonLinkmod *linkmod_files_rx_new() {
 	LinkmodFiles *linkmod_files = malloc(sizeof(LinkmodFiles));
 	memset(linkmod_files, 0, sizeof(*linkmod_files));
 	linkmod_files->base64 = base64_new();
-	linkmod_files->files_dir_path = getenv(FILES_DIR_RX_VAR_NAME);
+	linkmod_files->files_dir_name = getenv(FILES_DIR_RX_VAR_NAME);
 	linkmod_files->public.long_thread = long_thread_new((LongThreadOptions){
 		.name="linkmod-console-rx",
 		.start_fn=_linkmod_files_thread_start,
@@ -122,16 +123,14 @@ bool _linkmod_files_thread_start(LongThread *long_thread, void *data) {
 
 	bool error = false;
 
-	error = (linkmod_files->files_dir_path == NULL);
-
 	if (!error) {
 		linkmod_files->frames_file_path = path_join(
-			linkmod_files->files_dir_path,
-			strlen(linkmod_files->files_dir_path),
-			FRAMES_TX_FILE_NAME,
-			strlen(FRAMES_TX_FILE_NAME)
+			linkmod_files->files_dir_name,
+			strlen(linkmod_files->files_dir_name),
+			FRAMES_FILE_NAME,
+			strlen(FRAMES_FILE_NAME)
 		);
-		error = linkmod_files->frames_file_path == NULL;
+		error = (linkmod_files->frames_file_path == NULL);
 	}
 
 	return !error;
@@ -158,13 +157,12 @@ LongThreadResult _linkmod_files_tx_thread_loop(LongThread *long_thread, void *da
 
 	DIR *files_dir;
 
-	files_dir = opendir(linkmod_files->files_dir_path);
+	files_dir = opendir(linkmod_files->files_dir_name);
 
 	if (files_dir && !linkmod_files->transfer_complete) {
 		// There might be files available to read.
 		fprintf(stderr, "Device connected. Writing frames...\n");
-		_push_to_frames_file(linkmod_files, pigeon_link);
-		closedir(files_dir);
+		_push_to_frames_file(linkmod_files, pigeon_link, files_dir);
 	} else if (!files_dir && linkmod_files->transfer_complete) {
 		// Once the device is removed, we should be ready to transfer files again
 		fprintf(stderr, "Device removed.\n");
@@ -177,7 +175,7 @@ LongThreadResult _linkmod_files_tx_thread_loop(LongThread *long_thread, void *da
 	return LONG_THREAD_CONTINUE;
 }
 
-bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) {
+bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link, DIR *files_dir) {
 	// It is important that we open the file with O_SYNC so changes are committed to disk.
 	FILE *frames_file = _fopen_with_sync(linkmod_files->frames_file_path, "a");
 
@@ -231,14 +229,24 @@ bool _push_to_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) 
 		}
 	}
 
+	pigeon_ui_action(UI_ACTION_TX_BUSY);
+
 	if (frames_file) {
 		fflush(frames_file);
 		fclose(frames_file);
 	}
 
+	if (files_dir) {
+		closedir(files_dir);
+	}
+
+	if (umount(linkmod_files->files_dir_name) != 0) {
+		perror("Error unmounting");
+		pigeon_ui_action(UI_ACTION_TX_ERROR);
+	}
+
 	if (linkmod_files->transfer_complete) {
 		fprintf(stderr, "Finished writing frames to file\n");
-		pigeon_ui_action(UI_ACTION_TX_WAITING);
 	} else if (error) {
 		fprintf(stderr, "Cancelled writing frames to file\n");
 		linkmod_files->transfer_complete = true;
@@ -254,12 +262,11 @@ LongThreadResult _linkmod_files_rx_thread_loop(LongThread *long_thread, void *da
 
 	DIR *files_dir;
 
-	files_dir = opendir(linkmod_files->files_dir_path);
+	files_dir = opendir(linkmod_files->files_dir_name);
 
 	if (files_dir) {
 		// There might be files available to read.
-		_pop_from_frames_file(linkmod_files, pigeon_link);
-		closedir(files_dir);
+		_pop_from_frames_file(linkmod_files, pigeon_link, files_dir);
 	}
 
 	nanosleep(&FILES_DIR_POLL_DELAY, NULL);
@@ -267,11 +274,13 @@ LongThreadResult _linkmod_files_rx_thread_loop(LongThread *long_thread, void *da
 	return LONG_THREAD_CONTINUE;
 }
 
-bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link) {
+bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link, DIR *files_dir) {
 	FILE *frames_file = fopen(linkmod_files->frames_file_path, "r+");
 
 	if (frames_file == NULL) {
-		perror("Error opening frames file");
+		// This is to be expected sometimes
+		// perror("Error opening frames file");
+		return false;
 	}
 
 	char raw_buffer[READ_BUFFER_SIZE];
@@ -301,6 +310,14 @@ bool _pop_from_frames_file(LinkmodFiles *linkmod_files, PigeonLink *pigeon_link)
 	if (frames_file != NULL) {
 		fflush(frames_file);
 		fclose(frames_file);
+	}
+
+	if (files_dir) {
+		closedir(files_dir);
+	}
+
+	if (umount(linkmod_files->files_dir_name) != 0) {
+		perror("Error unmounting");
 	}
 
 	pigeon_ui_action(UI_ACTION_RX_SUCCESS);

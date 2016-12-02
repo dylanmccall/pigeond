@@ -126,7 +126,7 @@ bool _beagle_display_thread_start(LongThread *long_thread, void *data) {
 	}
 
 	if (!error) {
-		beagle_display_set_output(beagle_display, "--");
+		beagle_display_set_output(beagle_display, "  ");
 		clock_gettime(CLOCK_MONOTONIC, &beagle_display->start_time);
 	}
 

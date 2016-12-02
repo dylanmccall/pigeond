@@ -11,6 +11,8 @@
 //#define PRINTER_FILE "./test.txt"
 #define PRINTER_FILE "/dev/ttyO5"
 
+#define PRINTER_ENABLED_VAR_NAME "PIGEOND_PRINTER_TX"
+
 /**
  * A linkmod porovides an abstract interface for our modem to send and receive
  * data. This is necessary because the same data can be carried over a variety
@@ -40,12 +42,7 @@ LongThreadResult _linkmod_printer_tx_thread_loop(LongThread *long_thread, void *
  * that says it is available.
  */
 bool linkmod_printer_tx_is_available() {
-	if( access(PRINTER_FILE, F_OK) != -1) {
-		return true;
-	}
-	else {
-		return false;
-	}
+	return getenv(PRINTER_ENABLED_VAR_NAME) != NULL && access(PRINTER_FILE, F_OK) != -1;
 }
 
 /**

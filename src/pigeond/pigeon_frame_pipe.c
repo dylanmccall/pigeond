@@ -145,6 +145,25 @@ size_t pigeon_frame_pipe_read_is_full(PigeonFramePipeHandle pigeon_frame_pipe_re
 	return result;
 }
 
+void pigeon_frame_pipe_reset(PigeonFramePipe *pigeon_frame_pipe) {
+	PipeBuffer *tx_buffer = &pigeon_frame_pipe->tx;
+	PipeBuffer *rx_buffer = &pigeon_frame_pipe->rx;
+
+	pthread_mutex_lock(&tx_buffer->fifo_mutex);
+	{
+		pointer_fifo_clear(tx_buffer->fifo);
+	}
+	pthread_mutex_unlock(&tx_buffer->fifo_mutex);
+
+	pthread_mutex_lock(&rx_buffer->fifo_mutex);
+	{
+		pointer_fifo_clear(rx_buffer->fifo);
+	}
+	pthread_mutex_unlock(&rx_buffer->fifo_mutex);
+
+	_pigeon_frame_pipe_update_ui(pigeon_frame_pipe);
+}
+
 PigeonFrame *_pigeon_frame_pipe_try_pop(PigeonFramePipeHandle pigeon_frame_pipe_ref) {
 	PigeonFrame *result;
 	PipeBuffer *read_buffer = _pigeon_frame_pipe_ref_get_read_buffer(pigeon_frame_pipe_ref);

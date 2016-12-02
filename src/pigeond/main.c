@@ -6,6 +6,7 @@
  */
 
 #include "audioMixer.h"
+#include "beagle_controls.h"
 #include "command_runner.h"
 #include "command_server.h"
 #include "pigeon_frame_pipe.h"
@@ -31,6 +32,7 @@ int main() {
 	PigeonLink *pigeon_link = NULL;
 	CommandRunner *command_runner = NULL;
 	CommandServer *command_server = NULL;
+	BeagleControls *beagle_controls = NULL;
 	bool error = false;
 
 	pigeon_ui_init();
@@ -46,6 +48,8 @@ int main() {
 	pigeon_link = pigeon_link_new(
 		pigeon_frame_pipe_get_rx(pigeon_frame_pipe)
 	);
+
+	beagle_controls = beagle_controls_new(pigeon_frame_pipe);
 
 	command_runner = command_runner_new();
 
@@ -82,6 +86,13 @@ int main() {
 	if (!error) {
 		pigeon_ui_start();
 		pigeon_ui_set_flash_str("HI", 5);
+	}
+
+	if (!error) {
+		if (!beagle_controls_start(beagle_controls)) {
+			fprintf(stderr, "Error starting controls thread\n");
+			error = true;
+		}
 	}
 
 	if (!error) {
@@ -122,6 +133,7 @@ int main() {
 
 	fprintf(stdout, "Exiting…\n");
 
+	beagle_controls_stop(beagle_controls);
 	command_server_stop(command_server);
 	pigeon_link_stop(pigeon_link);
 	pigeon_tunnel_stop(pigeon_tunnel);
@@ -130,6 +142,9 @@ int main() {
 
 	pigeon_tunnel_free(pigeon_tunnel);
 	pigeon_tunnel = NULL;
+
+	beagle_controls_free(beagle_controls);
+	command_server = NULL;
 
 	command_server_free(command_server);
 	command_server = NULL;

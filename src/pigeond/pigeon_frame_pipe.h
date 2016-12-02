@@ -79,4 +79,9 @@ size_t pigeon_frame_pipe_read_is_empty(PigeonFramePipeHandle pigeon_frame_pipe_r
  */
 size_t pigeon_frame_pipe_read_is_full(PigeonFramePipeHandle pigeon_frame_pipe_ref);
 
+/**
+ * Clear all frames from all pipes.
+ */
+void pigeon_frame_pipe_reset(PigeonFramePipe *pigeon_frame_pipe);
+
 #endif

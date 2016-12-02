@@ -30,8 +30,12 @@ First, we need to enable the BB-BONE-AUDI-02 and BB-I2CI capes at startup. Edit 
 
 If you need to use the file transfer mode, we should set an environment variable for pigeond with a location where a device will *reliably* appear. Edit /etc/defaults/pigeond with something like this:
 
-    PIGEOND_FILES_TX=/var/run/usbmount/General_UDisk/myname
-    PIGEOND_FILES_RX=/var/run/usbmount/General_UDisk/remotename
+    PIGEOND_FILES_TX=/media/PGN_Ada
+    PIGEOND_FILES_RX=/media/PGN_Grace
+
+Note: TX and RX must point to the base directory of two separate USB storage devices.
+
+To enable the printer module, include `PIGEOND_PRINTER_TX=yes`. To enable the camera module, include `PIGEOND_CAMERA_RX=yes`.
 
 For our bridge interface to work, we need to stop eth0 from being assigned an IP address. To do this, disable connman's ownership of the eth0 interface. In /etc/connman/main.conf, change this line:
 
@@ -61,6 +65,29 @@ Now we need to configure a persistent pigeon0 device and a network bridge betwee
 Reboot the device and it should behave like a layer 2 hub (with some quirks). You can connect a device to the ethernet port, and any messages going over that port will be sent to our carrier pigeon interface. Any device we connect will need to configure its own network settings appropriately so it can communicate with whatever device is on the other end. For example, each device should have a static IP address like `192.168.10.2`, and a netmask like `255.255.255.0`. You should set an MTU of 170.
 
 Note that our device will drop IPv6 frames as well as IP broadcast frames. These were too noisy for our carrier pigeons to manage. Some applications may behave unexpectedly as a result.
+
+### Monitoring devices
+
+Let's install udevil for its devmon tool. (This sucks, but trust me, the other options here are worse).
+
+    apt install udevil
+
+Now, create a service file for devmon at /etc/systemd/system/devmon.service:
+
+    [Unit]
+    Description=Device monitoring daemon
+    
+    [Service]
+    ExecStart=/usr/bin/devmon
+    Restart=on-failure
+    
+    [Install]
+    WantedBy=multi-user.target
+
+Now start and enable it...
+
+    systemctl start devmon
+    systemctl enable devmon
 
 ## Authors
 

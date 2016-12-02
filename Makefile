@@ -6,6 +6,7 @@ OBJS_pigeond = \
 	pigeond/main.o \
 	pigeond/audioMixer.o \
 	pigeond/base64.o \
+	pigeond/beagle_controls.o \
 	pigeond/beagle_display.o \
 	pigeond/beagle_joystick.o \
 	pigeond/command_runner.o \
