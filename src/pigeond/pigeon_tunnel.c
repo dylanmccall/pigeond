@@ -317,12 +317,16 @@ LongThreadResult _pigeon_tunnel_read_thread_loop(LongThread *long_thread, void *
 
 bool _pigeon_tunnel_is_frame_allowed(PigeonFrame *pigeon_frame, const char **out_reason) {
 	bool is_broadcast = pigeon_frame_is_broadcast(pigeon_frame);
+	bool is_multicast = pigeon_frame_is_multicast(pigeon_frame);
 	unsigned ethertype = pigeon_frame_get_ethertype(pigeon_frame);
 	if (ethertype == ETHERTYPE_IPV6) {
 		*out_reason = "IPv6";
 		return false;
 	} else if (is_broadcast && ethertype != ETHERTYPE_ARP) {
 		*out_reason = "Non-ARP broadcast";
+		return false;
+	} else if (is_multicast && ethertype == ETHERTYPE_IP) {
+		*out_reason = "IP multicast";
 		return false;
 	} else {
 		return true;
