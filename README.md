@@ -26,9 +26,9 @@ Please install the Debian package, which includes a systemd init script for pige
 
 First, we need to enable the BB-BONE-AUDI-02 and BB-I2CI capes at startup. Edit /etc/default/capemgr and add this line:
 
-    CAPE=BB-BONE-AUDI-02 BB-I2C1
+    CAPE=BB-BONE-AUDI-02,BB-I2C1
 
-If you need to use the file transfer mode, we should set an environment variable for pigeond with a location where a device will *reliably* appear. Edit /etc/defaults/pigeond with something like this:
+If you need to use the file transfer mode, we should set an environment variable for pigeond with a location where a device will *reliably* appear. Edit /etc/default/pigeond with something like this:
 
     PIGEOND_FILES_TX=/media/PGN_Ada
     PIGEOND_FILES_RX=/media/PGN_Grace
