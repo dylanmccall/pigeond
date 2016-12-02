@@ -1,5 +1,6 @@
 #include "pigeon_frame_pipe.h"
 
+#include "pigeon_ui.h"
 #include "pointer_fifo.h"
 
 #include <assert.h>
@@ -25,6 +26,7 @@ PigeonFrame *_pigeon_frame_pipe_try_pop(PigeonFramePipeHandle pigeon_frame_pipe_
 
 PipeBuffer *_pigeon_frame_pipe_ref_get_write_buffer(PigeonFramePipeHandle pigeon_frame_pipe_ref);
 PipeBuffer *_pigeon_frame_pipe_ref_get_read_buffer(PigeonFramePipeHandle pigeon_frame_pipe_ref);
+void _pigeon_frame_pipe_update_ui(PigeonFramePipe *pigeon_frame_pipe);
 
 PigeonFramePipe *pigeon_frame_pipe_new() {
 	PigeonFramePipe *pigeon_frame_pipe = malloc(sizeof(PigeonFramePipe));
@@ -76,6 +78,8 @@ bool pigeon_frame_pipe_push(PigeonFramePipeHandle pigeon_frame_pipe_ref, PigeonF
 	if (success) {
 		pthread_cond_signal(&write_buffer->write_cond);
 	}
+
+	_pigeon_frame_pipe_update_ui(pigeon_frame_pipe_ref.pigeon_frame_pipe);
 
 	return success;
 }
@@ -151,6 +155,8 @@ PigeonFrame *_pigeon_frame_pipe_try_pop(PigeonFramePipeHandle pigeon_frame_pipe_
 	}
 	pthread_mutex_unlock(&read_buffer->fifo_mutex);
 
+	_pigeon_frame_pipe_update_ui(pigeon_frame_pipe_ref.pigeon_frame_pipe);
+
 	return result;
 }
 
@@ -170,4 +176,17 @@ PipeBuffer *_pigeon_frame_pipe_ref_get_read_buffer(PigeonFramePipeHandle pigeon_
 	} else {
 		return &pigeon_frame_pipe->tx;
 	}
+}
+
+void _pigeon_frame_pipe_update_ui(PigeonFramePipe *pigeon_frame_pipe) {
+	size_t count;
+	PipeBuffer *tx_buffer = &pigeon_frame_pipe->tx;
+
+	pthread_mutex_lock(&tx_buffer->fifo_mutex);
+	{
+		count = pointer_fifo_count(tx_buffer->fifo);
+	}
+	pthread_mutex_unlock(&tx_buffer->fifo_mutex);
+
+	pigeon_ui_set_display_count((int)count);
 }

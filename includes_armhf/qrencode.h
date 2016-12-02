@@ -23,8 +23,8 @@
  * symbology.
  *
  * \section encoding Encoding
- *
- * There are two methods to encode data: <b>encoding a string/data</b> or
+ * 
+ * There are two methods to encode data: <b>encoding a string/data</b> or 
  * <b>encoding a structured data</b>.
  *
  * \subsection encoding-string Encoding a string/data
@@ -68,7 +68,7 @@
  * to generate structured-appended symbols. This functions returns an instance
  * of ::QRcode_List. The returned list is a singly-linked list of QRcode: you
  * can retrieve each QR code in this way:
- *
+ *  
  * \code
  * QRcode_List *qrcodes;
  * QRcode_List *entry;
@@ -96,8 +96,8 @@
  * encoding symbols.
  */
 
-#ifndef QRENCODE_H
-#define QRENCODE_H
+#ifndef __QRENCODE_H__
+#define __QRENCODE_H__
 
 #if defined(__cplusplus)
 extern "C" {
@@ -360,17 +360,17 @@ extern int QRinput_setFNC1Second(QRinput *input, unsigned char appid);
  * the uchar is 1, the corresponding module is black. The other bits are
  * meaningless for usual applications, but here its specification is described.
  *
- * @verbatim
-   MSB 76543210 LSB
-       |||||||`- 1=black/0=white
-       ||||||`-- data and ecc code area
-       |||||`--- format information
-       ||||`---- version information
-       |||`----- timing pattern
-       ||`------ alignment pattern
-       |`------- finder pattern and separator
-       `-------- non-data modules (format, timing, etc.)
-   @endverbatim
+ * <pre>
+ * MSB 76543210 LSB
+ *     |||||||`- 1=black/0=white
+ *     ||||||`-- data and ecc code area
+ *     |||||`--- format information
+ *     ||||`---- version information
+ *     |||`----- timing pattern
+ *     ||`------ alignment pattern
+ *     |`------- finder pattern and separator
+ *     `-------- non-data modules (format, timing, etc.)
+ * </pre>
  */
 typedef struct {
 	int version;         ///< version of the symbol
@@ -472,7 +472,7 @@ extern void QRcode_free(QRcode *qrcode);
 /**
  * Create structured symbols from the input data.
  * @warning This function is THREAD UNSAFE when pthread is disabled.
- * @param s input data, structured.
+ * @param s
  * @return a singly-linked list of QRcode.
  */
 extern QRcode_List *QRcode_encodeInputStructured(QRinput_Struct *s);
@@ -539,9 +539,9 @@ extern void QRcode_List_free(QRcode_List *qrlist);
 
 /**
  * Return a string that identifies the library version.
- * @param major_version major version number
- * @param minor_version minor version number
- * @param micro_version micro version number
+ * @param major_version
+ * @param minor_version
+ * @param micro_version
  */
 extern void QRcode_APIVersion(int *major_version, int *minor_version, int *micro_version);
 
@@ -552,8 +552,15 @@ extern void QRcode_APIVersion(int *major_version, int *minor_version, int *micro
  */
 extern char *QRcode_APIVersionString(void);
 
+/**
+ * Clear all caches. This is only for debug purpose. If you are attacking a
+ * complicated memory leak bug, try this to reduce the reachable blocks record.
+ * @warning This function is THREAD UNSAFE when pthread is disabled.
+ */
+extern void QRcode_clearCache(void);
+
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* QRENCODE_H */
+#endif /* __QRENCODE_H__ */

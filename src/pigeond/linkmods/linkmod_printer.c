@@ -1,11 +1,12 @@
 #include "linkmod_printer.h"
 
+#include "../printer.h"
+#include "../pigeon_ui.h"
+
 #include <stdio.h>
 #include <string.h>
-#include "../printer.h"
 #include <unistd.h>
 #include <fcntl.h>
-#include "../audioMixer.h"
 
 //#define PRINTER_FILE "./test.txt"
 #define PRINTER_FILE "/dev/ttyO5"
@@ -27,7 +28,6 @@
 typedef struct {
 	PigeonLinkmod public;
 	int fileDescriptor;
-	wavedata_t *testSound;
 } LinkmodPrinter;
 
 bool _linkmod_printer_tx_thread_start(LongThread *long_thread, void *data);
@@ -57,7 +57,6 @@ bool linkmod_printer_tx_is_available() {
 PigeonLinkmod *linkmod_printer_tx_new() {
 	LinkmodPrinter *linkmod_printer = malloc(sizeof(LinkmodPrinter));
 	memset(linkmod_printer, 0, sizeof(*linkmod_printer));
-	linkmod_printer->testSound = AudioMixer_waveData_new();
 	linkmod_printer->public.long_thread = long_thread_new((LongThreadOptions){
 		.name="linkmod-printer-tx",
 		.start_fn=_linkmod_printer_tx_thread_start,
@@ -75,7 +74,6 @@ PigeonLinkmod *linkmod_printer_tx_new() {
 void linkmod_printer_tx_free(PigeonLinkmod *linkmod) {
 	LinkmodPrinter *linkmod_printer = (LinkmodPrinter *)linkmod;
 	long_thread_free(linkmod_printer->public.long_thread);
-	AudioMixer_waveData_free(linkmod_printer->testSound);
 	free(linkmod_printer);
 }
 
@@ -87,7 +85,6 @@ bool _linkmod_printer_tx_thread_start(LongThread *long_thread, void *data) {
 	if (!error) {
 		// Any expensive initialization. (Open files, etc.).
 		linkmod_printer->fileDescriptor = open(PRINTER_FILE, O_WRONLY | O_NOCTTY | O_NDELAY);
-		AudioMixer_readWaveFileIntoMemory("data/SoundEffects/testSound.wav", linkmod_printer->testSound);
 	}
 
 	return !error;
@@ -101,7 +98,6 @@ bool _linkmod_printer_tx_thread_stop(LongThread *long_thread, void *data) {
 	if (!error) {
 		// Close files opened in _linkmod_console_tx_thread_start.
 		close(linkmod_printer->fileDescriptor);
-		AudioMixer_freeWaveFileData(linkmod_printer->testSound);
 	}
 
 	return !error;
@@ -122,7 +118,7 @@ LongThreadResult _linkmod_printer_tx_thread_loop(LongThread *long_thread, void *
 		fprintf(stderr, "Printing frame\n");
 		const unsigned char *toPrint;
 		size_t toPrintLength = pigeon_frame_get_buffer(pigeon_frame, &toPrint);
-		AudioMixer_queueSound(linkmod_printer->testSound);
+		pigeon_ui_action(UI_ACTION_TX_BUSY_SLOW);
 		printer_printQRCode(linkmod_printer->fileDescriptor, toPrint, (int)toPrintLength);
 		//pigeon_frame_print_header(pigeon_frame);
 		//pigeon_frame_print_data(pigeon_frame);

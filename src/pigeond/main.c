@@ -5,12 +5,13 @@
  * @author Dylan McCall <dmccall@sfu.ca>
  */
 
+#include "audioMixer.h"
 #include "command_runner.h"
 #include "command_server.h"
 #include "pigeon_frame_pipe.h"
 #include "pigeon_link.h"
 #include "pigeon_tunnel.h"
-#include "audioMixer.h"
+#include "pigeon_ui.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,6 +33,9 @@ int main() {
 	CommandServer *command_server = NULL;
 	bool error = false;
 
+	pigeon_ui_init();
+	AudioMixer_init();
+
 	pigeon_frame_pipe = pigeon_frame_pipe_new();
 
 	pigeon_tunnel = pigeon_tunnel_new(
@@ -43,8 +47,6 @@ int main() {
 		pigeon_frame_pipe_get_rx(pigeon_frame_pipe)
 	);
 
-	AudioMixer_init();
-	
 	command_runner = command_runner_new();
 
 	command_server = command_server_new(command_runner);
@@ -78,6 +80,11 @@ int main() {
 	}
 
 	if (!error) {
+		pigeon_ui_start();
+		pigeon_ui_set_flash_str("HI", 5);
+	}
+
+	if (!error) {
 		if (!command_server_start(command_server)) {
 			fprintf(stderr, "Error starting command server\n");
 			error = true;
@@ -102,7 +109,7 @@ int main() {
 		// Enable Seccomp mode.
 		// TODO: We should also setuid to a non-privileged user.
 		// TODO: It would be good to enable seccomp earlier, but it causes
-		//       our thread start functions to deadlock.
+		//       our thread start functions to fail. (They'll need more work).
 		if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_STRICT) != 0) {
 			perror("Error enabling seccomp");
 			error = true;
@@ -119,6 +126,8 @@ int main() {
 	pigeon_link_stop(pigeon_link);
 	pigeon_tunnel_stop(pigeon_tunnel);
 
+	pigeon_ui_stop();
+
 	pigeon_tunnel_free(pigeon_tunnel);
 	pigeon_tunnel = NULL;
 
@@ -130,6 +139,9 @@ int main() {
 
 	pigeon_link_free(pigeon_link);
 	pigeon_link = NULL;
+
+	AudioMixer_cleanup();
+	pigeon_ui_destroy();
 
 	return 0;
 }
