@@ -25,6 +25,9 @@ OBJS_pigeond = \
 	pigeond/printer.o \
 	pigeond/util.o
 
+DATA_DIRS_pigeond = \
+    pigeond-data
+
 DATA_DIRS_pigeon_admin = \
 	pigeon-admin
 

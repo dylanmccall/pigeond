@@ -1,2 +1,3 @@
 out/default/pigeond usr/bin
+out/default/pigeond-data/* usr/share/pigeond
 data/_system/network/10-pigeon-bridge.conf etc/network/interfaces.d
