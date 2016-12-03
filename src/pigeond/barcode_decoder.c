@@ -94,10 +94,10 @@ int capture_image(){
                 printf("Warning: driver is sending image at %dx%d\n",
                         fmt.fmt.pix.width, fmt.fmt.pix.height);
 
-	/*CHANGE FOCUS BY DESABLING AUTO FOCUSE AND SETTING VALUES HERE*/
-	system("v4l2-ctl -d /dev/video0 -c focus_auto=0");
-	system("v4l2-ctl -d /dev/video0 -c focus_absolute=30");
-	/***************************************************************/
+	   /*CHANGE FOCUS BY DESABLING AUTO FOCUSE AND SETTING VALUES HERE*/
+	   system("v4l2-ctl -d /dev/video0 -c focus_auto=0");
+	   system("v4l2-ctl -d /dev/video0 -c focus_absolute=30");
+	   /***************************************************************/
 
         CLEAR(req);
         req.count = 2;
@@ -192,26 +192,24 @@ int capture_image(){
 //int main(int argc, char **argv){
 
 
-char* bar_code_read() {
+unsigned char* bar_code_read() {
 
-        capture_image();
+    capture_image();
 
-
-
-    FILE * fptr;                    // file holder
-    char c;                         // char buffer
+    //FILE * fptr;                    // file holder
+    //char c;                         // char buffer
 
 
     system("zbarimg -q output_image.ppm | cut -d: -f2- >> temp.txt");      // call dir and put it's contents in a temp using redirects.
-    fptr = fopen("temp.txt", "r");  // open said file for reading.
+    //fptr = fopen("temp.txt", "r");  // open said file for reading.
                                     // oh, and check for fptr being NULL.
 
-    fclose(fptr);                   // don't call this is fptr is NULL.  
+    //fclose(fptr);                   // don't call this is fptr is NULL.  
 
 
 
 
-    char *file_contents;
+    unsigned char *file_contents;
     long input_file_size;
     FILE *input_file = fopen("temp.txt", "rb");
     fseek(input_file, 0, SEEK_END);
@@ -223,8 +221,8 @@ char* bar_code_read() {
         remove("output_image.ppm");        
         return NULL;
     }
-    file_contents = malloc(input_file_size * (sizeof(char)));
-    fread(file_contents, sizeof(char), input_file_size, input_file);
+    file_contents = malloc(input_file_size * (sizeof(unsigned char)));
+    fread(file_contents, sizeof(unsigned char), input_file_size, input_file);
     fclose(input_file);
     remove("temp.txt");
     remove("output_image.ppm");
