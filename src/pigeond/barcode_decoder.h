@@ -2,6 +2,6 @@
 #ifndef _BARCODE_DECODER_H
 #define _BARCODE_DECODER_H
 
-unsigned char * bar_code_read(void);
+int bar_code_read(unsigned char *buffer);
 
 #endif

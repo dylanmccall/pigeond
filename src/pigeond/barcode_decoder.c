@@ -192,7 +192,7 @@ int capture_image(){
 //int main(int argc, char **argv){
 
 
-unsigned char* bar_code_read() {
+int bar_code_read(unsigned char *buffer) {
 
     capture_image();
 
@@ -209,7 +209,7 @@ unsigned char* bar_code_read() {
 
 
 
-    unsigned char *file_contents;
+    //unsigned char *file_contents;
     long input_file_size;
     FILE *input_file = fopen("temp.txt", "rb");
     fseek(input_file, 0, SEEK_END);
@@ -221,12 +221,12 @@ unsigned char* bar_code_read() {
         remove("output_image.ppm");        
         return NULL;
     }
-    file_contents = malloc(input_file_size * (sizeof(unsigned char)));
-    fread(file_contents, sizeof(unsigned char), input_file_size, input_file);
+    buffer = malloc(input_file_size * (sizeof(unsigned char)));
+    fread(buffer, sizeof(unsigned char), input_file_size, input_file);
     fclose(input_file);
     remove("temp.txt");
     remove("output_image.ppm");
-    return file_contents;
+    return input_file_size;
 
 }
 

@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "../barcode_decoder.h"
 
 /**
  * A linkmod porovides an abstract interface for our modem to send and receive
