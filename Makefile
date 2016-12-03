@@ -5,6 +5,7 @@ BINS := pigeond pigeon_admin
 OBJS_pigeond = \
 	pigeond/main.o \
 	pigeond/audioMixer.o \
+	pigeond/barcode_decoder.o \
 	pigeond/base64.o \
 	pigeond/beagle_controls.o \
 	pigeond/beagle_display.o \
@@ -14,6 +15,7 @@ OBJS_pigeond = \
 	pigeond/debounce.o \
 	pigeond/fsd_char.o \
 	pigeond/gpio.o \
+	pigeond/linkmods/linkmod_camera.o \
 	pigeond/linkmods/linkmod_console.o \
 	pigeond/linkmods/linkmod_files.o \
 	pigeond/linkmods/linkmod_null.o \
