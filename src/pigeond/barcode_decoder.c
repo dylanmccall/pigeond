@@ -94,10 +94,10 @@ int capture_image(){
                 printf("Warning: driver is sending image at %dx%d\n",
                         fmt.fmt.pix.width, fmt.fmt.pix.height);
 
-/*CHANGE FOCUS BY DESABLING AUTO FOCUSE AND SETTING VALUES HERE*/
-system("v4l2-ctl -d /dev/video0 -c focus_auto=0");
-system("v4l2-ctl -d /dev/video0 -c focus_absolute=30");
-/***************************************************************/
+	/*CHANGE FOCUS BY DESABLING AUTO FOCUSE AND SETTING VALUES HERE*/
+	system("v4l2-ctl -d /dev/video0 -c focus_auto=0");
+	system("v4l2-ctl -d /dev/video0 -c focus_absolute=30");
+	/***************************************************************/
 
         CLEAR(req);
         req.count = 2;
