@@ -214,7 +214,7 @@ unsigned char* bar_code_read() {
     FILE *input_file = fopen("temp.txt", "rb");
     fseek(input_file, 0, SEEK_END);
     input_file_size = ftell(input_file);
-    printf("\nFILE SIZE %d\n", input_file_size);
+    //printf("\nFILE SIZE %d\n", input_file_size);
     rewind(input_file);
     if (input_file_size == 0){
         remove("temp.txt");
