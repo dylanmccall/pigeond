@@ -325,7 +325,7 @@ bool _pigeon_tunnel_is_frame_allowed(PigeonFrame *pigeon_frame, const char **out
 	} else if (is_broadcast && ethertype != ETHERTYPE_ARP) {
 		*out_reason = "Non-ARP broadcast";
 		return false;
-	} else if (is_multicast && ethertype == ETHERTYPE_IP) {
+	} else if (false && is_multicast && ethertype == ETHERTYPE_IP) {
 		*out_reason = "IP multicast";
 		return false;
 	} else {

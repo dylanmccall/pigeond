@@ -18,9 +18,6 @@
 //       callbacks for directories being mounted. Alas, opendir is much, much
 //       easier to throw together on a whim in our case :)
 
-// FIXME: There is currently no way to stop this from writing to files.
-//        Perhaps stop automatically and beep after 20 packets or 10 seconds?
-
 // TODO: It is only possible to have frames.tx or frames.rx in a single place.
 //       They can never overlap. We should have a mechanism so a device can
 //       both read and write frames without getting confused.
