@@ -218,8 +218,8 @@ size_t bar_code_read(unsigned char *buffer) {
     rewind(input_file);
     if (input_file_size == 0){
         remove("temp.txt");
-        remove("output_image.ppm");        
-        return NULL;
+        remove("output_image.ppm");
+        return 0;
     }
     buffer = malloc(input_file_size * (sizeof(unsigned char)));
     fread(buffer, sizeof(unsigned char), input_file_size, input_file);
