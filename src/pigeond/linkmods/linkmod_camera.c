@@ -4,6 +4,9 @@
 #include <string.h>
 #include "../barcode_decoder.h"
 #include "../pigeon_ui.h"
+#include "../beagle_joystick.h"
+//#include "../debounce.h"
+
 
 /**
  * A linkmod porovides an abstract interface for our modem to send and receive
@@ -21,6 +24,7 @@
  */
 typedef struct {
 	PigeonLinkmod public;
+	BeagleJoystick *beagle_joystick;
 } LinkmodCamera;
 
 bool _linkmod_camera_rx_thread_start(LongThread *long_thread, void *data);
@@ -75,11 +79,12 @@ void linkmod_camera_rx_free(PigeonLinkmod *linkmod) {
 }
 
 bool _linkmod_camera_rx_thread_start(LongThread *long_thread, void *data) {
-	//LinkmodCamera *linkmod_camera = (LinkmodCamera *)data;
+	LinkmodCamera *linkmod_camera = (LinkmodCamera *)data;
 
 	bool error = false;
 
 	if (!error) {
+		linkmod_camera->beagle_joystick = beagle_joystick_open();
 		// Any expensive initialization. (Open files, etc.).
 		//linkmod_camera->foo = "bar";
 	}
@@ -88,11 +93,12 @@ bool _linkmod_camera_rx_thread_start(LongThread *long_thread, void *data) {
 }
 
 bool _linkmod_camera_rx_thread_stop(LongThread *long_thread, void *data) {
-	//LinkmodCamera *linkmod_camera = (LinkmodCamera *)data;
+	LinkmodCamera *linkmod_camera = (LinkmodCamera *)data;
 
 	bool error = false;
 
 	if (!error) {
+		beagle_joystick_close(linkmod_camera->beagle_joystick);
 		// Close files opened in _linkmod_camera_tx_thread_start.
 		//linkmod_camera->foo = NULL;
 	}
@@ -108,20 +114,35 @@ bool _linkmod_camera_rx_thread_stop(LongThread *long_thread, void *data) {
 LongThreadResult _linkmod_camera_rx_thread_loop(LongThread *long_thread, void *data) {
 	LinkmodCamera *linkmod_camera = (LinkmodCamera *)data;
 	PigeonLink *pigeon_link = linkmod_camera->public.pigeon_link;
+	size_t buffer_size = 0;
 
-	unsigned char *buffer;
-	//bar_code_read allocates memory in buffer
-	size_t buffer_size = bar_code_read(buffer);
+	unsigned char *buffer = NULL;
+
+	BeagleJoystickVectors directions;
+	directions.y = 0;
+
+	while(buffer_size == 0) {
+
+		while(directions.y == 0) {
+			beagle_joystick_get_motion(linkmod_camera->beagle_joystick, &directions);
+			//Sleep here
+		}
+
+		//bar_code_read allocates memory in buffer
+		buffer_size = bar_code_read(buffer);
+		if(buffer_size == 0) {
+			//We got bupkiss back from the camera, let the user know they need to try again
+			printf("Please take another image");
+		}
+	}
 
 	PigeonFrame *pigeon_frame = pigeon_frame_new(buffer, buffer_size);
-
-	//Buffer should be cleaned up right away as the pigeon frame makes it's own copy
+	//Pigeon frame has made a copy of buffer so it's not needed anymore
 	free(buffer);
 
 	if (pigeon_frame != NULL) {
 		pigeon_link_frames_push(pigeon_link, pigeon_frame);
 	}
-
 	pigeon_ui_action(UI_ACTION_RX_SUCCESS);
 
 	return LONG_THREAD_CONTINUE;
