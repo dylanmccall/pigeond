@@ -5,6 +5,7 @@ BINS := pigeond pigeon_admin
 OBJS_pigeond = \
 	pigeond/main.o \
 	pigeond/audioMixer.o \
+	pigeond/barcode_decoder.o \
 	pigeond/base64.o \
 	pigeond/beagle_controls.o \
 	pigeond/beagle_display.o \
@@ -14,6 +15,7 @@ OBJS_pigeond = \
 	pigeond/debounce.o \
 	pigeond/fsd_char.o \
 	pigeond/gpio.o \
+	pigeond/linkmods/linkmod_camera.o \
 	pigeond/linkmods/linkmod_console.o \
 	pigeond/linkmods/linkmod_files.o \
 	pigeond/linkmods/linkmod_null.o \
@@ -51,7 +53,7 @@ CC ?= gcc
 CC_armhf ?= arm-linux-gnueabihf-gcc
 CFLAGS ?= -g -Wall -Werror -std=c99 -D _POSIX_C_SOURCE=200809L
 CFLAGS_armhf ?= $(CFLAGS) -I ./includes_armhf
-LDFLAGS ?= -lm -lpthread -lqrencode -lasound
+LDFLAGS ?= -lm -lpthread -lqrencode -lasound -lv4l2
 LDFLAGS_armhf ?= $(LDFLAGS) -L ./libs_armhf
 
 include Makefile.base
