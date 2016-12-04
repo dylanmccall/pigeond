@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../barcode_decoder.h"
+#include "../pigeon_ui.h"
 
 /**
  * A linkmod porovides an abstract interface for our modem to send and receive
@@ -108,14 +109,20 @@ LongThreadResult _linkmod_camera_rx_thread_loop(LongThread *long_thread, void *d
 	LinkmodCamera *linkmod_camera = (LinkmodCamera *)data;
 	PigeonLink *pigeon_link = linkmod_camera->public.pigeon_link;
 
-	PigeonFrame *pigeon_frame = pigeon_link_frames_pop(pigeon_link);
+	unsigned char *buffer;
+	//bar_code_read allocates memory in buffer
+	size_t buffer_size = bar_code_read(buffer);
 
-	if (pigeon_frame) {
-		fprintf(stderr, "linkmod-camera-tx: Got next frame\n");
-		pigeon_frame_print_header(pigeon_frame);
-		pigeon_frame_print_data(pigeon_frame);
-		pigeon_frame_free(pigeon_frame);
+	PigeonFrame *pigeon_frame = pigeon_frame_new(buffer, buffer_size);
+
+	//Buffer should be cleaned up right away as the pigeon frame makes it's own copy
+	free(buffer);
+
+	if (pigeon_frame != NULL) {
+		pigeon_link_frames_push(pigeon_link, pigeon_frame);
 	}
+
+	pigeon_ui_action(UI_ACTION_RX_SUCCESS);
 
 	return LONG_THREAD_CONTINUE;
 }

@@ -192,7 +192,7 @@ int capture_image(){
 //int main(int argc, char **argv){
 
 
-int bar_code_read(unsigned char *buffer) {
+size_t bar_code_read(unsigned char *buffer) {
 
     capture_image();
 
@@ -210,7 +210,7 @@ int bar_code_read(unsigned char *buffer) {
 
 
     //unsigned char *file_contents;
-    long input_file_size;
+    size_t input_file_size;
     FILE *input_file = fopen("temp.txt", "rb");
     fseek(input_file, 0, SEEK_END);
     input_file_size = ftell(input_file);
