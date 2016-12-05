@@ -5,7 +5,7 @@
 #include "../barcode_decoder.h"
 #include "../pigeon_ui.h"
 #include "../beagle_joystick.h"
-#include "../utils.h"
+#include "../util.h"
 #include <time.h>
 //#include "../debounce.h"
 
@@ -134,7 +134,7 @@ LongThreadResult _linkmod_camera_rx_thread_loop(LongThread *long_thread, void *d
 
 		while(directions.y == 0) {
 			beagle_joystick_get_motion(linkmod_camera->beagle_joystick, &directions);
-			nanosleep(INPUT_POLL_DELAY, NULL);
+			nanosleep(&INPUT_POLL_DELAY, NULL);
 		}
 
 		//bar_code_read allocates memory in buffer
