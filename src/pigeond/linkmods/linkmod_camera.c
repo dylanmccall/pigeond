@@ -5,6 +5,8 @@
 #include "../barcode_decoder.h"
 #include "../pigeon_ui.h"
 #include "../beagle_joystick.h"
+#include "../utils.h"
+#include <time.h>
 //#include "../debounce.h"
 
 
@@ -32,6 +34,11 @@ typedef struct {
 bool _linkmod_camera_rx_thread_start(LongThread *long_thread, void *data);
 bool _linkmod_camera_rx_thread_stop(LongThread *long_thread, void *data);
 LongThreadResult _linkmod_camera_rx_thread_loop(LongThread *long_thread, void *data);
+
+static struct timespec INPUT_POLL_DELAY = {
+	.tv_sec=0,
+	.tv_nsec=50 * MILLISECONDS_IN_NANOSECONDS
+};
 
 /**
  * This should check for available hardware and only return true if this
@@ -127,7 +134,7 @@ LongThreadResult _linkmod_camera_rx_thread_loop(LongThread *long_thread, void *d
 
 		while(directions.y == 0) {
 			beagle_joystick_get_motion(linkmod_camera->beagle_joystick, &directions);
-			//Sleep here
+			nanosleep(INPUT_POLL_DELAY, NULL);
 		}
 
 		//bar_code_read allocates memory in buffer
