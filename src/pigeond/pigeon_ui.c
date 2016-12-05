@@ -67,15 +67,15 @@ void pigeon_ui_stop() {
 void pigeon_ui_action(PigeonUIAction action) {
 	switch (action) {
 		case UI_ACTION_RX_BUSY: {
-			pigeon_ui_set_flash_str("<-", 2);
+			pigeon_ui_set_flash_str("{-", 2);
 			break;
 		}
 		case UI_ACTION_RX_WAITING: {
-			pigeon_ui_set_flash_str("<-", 2);
+			pigeon_ui_set_flash_str("{-", 2);
 			break;
 		}
 		case UI_ACTION_RX_SUCCESS: {
-			pigeon_ui_set_flash_str("<-", 2);
+			pigeon_ui_set_flash_str("{-", 2);
 			break;
 		}
 		case UI_ACTION_RX_ERROR: {
@@ -92,12 +92,12 @@ void pigeon_ui_action(PigeonUIAction action) {
 			break;
 		}
 		case UI_ACTION_TX_WAITING: {
-			pigeon_ui_set_flash_str("->", 15);
+			pigeon_ui_set_flash_str("-}", 15);
 			AudioMixer_queueSound(pigeon_ui->beep);
 			break;
 		}
 		case UI_ACTION_TX_SUCCESS: {
-			pigeon_ui_set_flash_str("->", 10);
+			pigeon_ui_set_flash_str("-}", 10);
 			AudioMixer_queueSound(pigeon_ui->beep);
 			break;
 		}

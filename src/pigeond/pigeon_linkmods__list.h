@@ -9,6 +9,7 @@
 
 #include "pigeon_linkmod.h"
 
+#include "linkmods/linkmod_camera.h"
 #include "linkmods/linkmod_console.h"
 #include "linkmods/linkmod_files.h"
 #include "linkmods/linkmod_null.h"
@@ -65,9 +66,9 @@ const PigeonLinkmodInfo LINKMODS_RX[] = {
 	{
 		.type = LINKMOD_TYPE_RX,
 		.name = "scan-rx",
-		.is_available_fn = NULL,
-		.new_fn = NULL,
-		.free_fn = NULL
+		.is_available_fn = linkmod_camera_rx_is_available,
+		.new_fn = linkmod_camera_rx_new,
+		.free_fn = linkmod_camera_rx_free
 	},
 	{
 		.type = LINKMOD_TYPE_RX,

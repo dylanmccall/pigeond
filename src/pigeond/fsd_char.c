@@ -250,6 +250,16 @@ const FSDChar FSD_CHARS[] = {
 		BOTTOM_X_LEFT
 	},
 	{
+		'{', // special left-pointing arrow (<-)
+		TOP_X_RIGHT,
+		BOTTOM_X_RIGHT | BOTTOM_BAR_RIGHT
+	},
+	{
+		'}', // special right-pointing arrow (->)
+		TOP_X_LEFT | TOP_BAR_LEFT,
+		BOTTOM_X_LEFT
+	},
+	{
 		'/',
 		TOP_X_RIGHT,
 		BOTTOM_X_LEFT

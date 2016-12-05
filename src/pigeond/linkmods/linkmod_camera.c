@@ -27,6 +27,8 @@ typedef struct {
 	BeagleJoystick *beagle_joystick;
 } LinkmodCamera;
 
+#define CAMERA_ENABLED_VAR_NAME "PIGEOND_CAMERA_RX"
+
 bool _linkmod_camera_rx_thread_start(LongThread *long_thread, void *data);
 bool _linkmod_camera_rx_thread_stop(LongThread *long_thread, void *data);
 LongThreadResult _linkmod_camera_rx_thread_loop(LongThread *long_thread, void *data);
@@ -37,7 +39,7 @@ LongThreadResult _linkmod_camera_rx_thread_loop(LongThread *long_thread, void *d
  * that says it is available.
  */
 bool linkmod_camera_tx_is_available() {
-	return false;
+	return getenv(CAMERA_ENABLED_VAR_NAME) != NULL;
 }
 
 /**
