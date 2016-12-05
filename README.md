@@ -41,9 +41,9 @@ For our bridge interface to work, we need to stop eth0 from being assigned an IP
 
     NetworkInterfaceBlacklist=usb0,SoftAp0
 
-... to include eth0:
+... to include eth0, pigeon0 and br0:
 
-    NetworkInterfaceBlacklist=usb0,SoftAp0,eth0
+    NetworkInterfaceBlacklist=usb0,SoftAp0,eth0,pigeon0,br0
 
 Now we need to configure a persistent pigeon0 device and a network bridge between eth0 and pigeon0. In /etc/network/interfaces, add these lines:
 
@@ -52,6 +52,7 @@ Now we need to configure a persistent pigeon0 device and a network bridge betwee
     auto pigeon0
     iface pigeon0 inet manual
         pre-up ip tuntap add pigeon0 mode tap
+        pre-up ip link set pigeon0 multicast off
         post-down ip link del dev pigeon0
     
     auto br0
