@@ -260,9 +260,9 @@ LongThreadResult _pigeon_tunnel_write_thread_loop(LongThread *long_thread, void 
 	PigeonFrame *pigeon_frame = pigeon_tunnel_frames_pop(pigeon_tunnel);
 
 	if (pigeon_frame) {
-		fprintf(stderr, "tunnel-write: Received next frame\n");
+		fprintf(stderr, "tunnel-write: Writing frame to tunnel\n");
 
-		// pigeon_frame_print_header(pigeon_frame);
+		pigeon_frame_print_header(pigeon_frame);
 		// pigeon_frame_print_data(pigeon_frame);
 
 		const unsigned char *buffer;
@@ -304,7 +304,7 @@ LongThreadResult _pigeon_tunnel_read_thread_loop(LongThread *long_thread, void *
 		const char *reject_reason;
 		bool is_allowed = _pigeon_tunnel_is_frame_allowed(pigeon_frame, &reject_reason);
 		if (is_allowed) {
-			fprintf(stderr, "tunnel-read: Sending next frame\n");
+			fprintf(stderr, "tunnel-read: Got frame from tunnel\n");
 			pigeon_tunnel_frames_push(pigeon_tunnel, pigeon_frame);
 		} else {
 			fprintf(stderr, "tunnel-read: Dropping frame: %s\n", reject_reason);
