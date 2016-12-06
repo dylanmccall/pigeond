@@ -2,13 +2,39 @@
 
 Created for CMPT 433, and based loosely on RFC 1149.
 
-## Components
+## Building pigeond
 
-### pigeond
+The pigeond program opens a "pigeon0" network device using the tun/tap interface. It sends and receives data over this device using the IP Over Avian Carrier Protocol.
 
-Create a "pigeon0" network device using the tun/tap interface. Send and receive data over this device using the avian carrier link layer protocol. This should include a systemd unit file.
+To build on Ubuntu, you will need to install some dependencies:
 
-Currently we work with a hard-coded persistent network device. It is best to create and configure this device in advance:
+    sudo apt install libasound2-dev libqrencode-dev libv4l-dev libzbar-dev
+
+Note that equivalent armhf libraries and header files (to cross-compile for BeagleBone) are included for your convenience.
+
+To build for armhf and copy the resulting binary to ~/cmpt433/public/myApps:
+
+    make
+
+To build for all architectures:
+
+    make build.all
+
+The output will be located in ./our/default/ and ./out/armhf/. Substitute "default" or "armhf" for all to build for a specific architecture.
+
+To remove build output:
+
+    make clean
+
+To create a Debian package for the current architecture, which can be installed using `dpkg -i`:
+
+    dpkg-buildpackage -b -uc -us
+
+This is the recommended way to install pigeond, along with its systemd service configuration, so it can be used as a system service.
+
+## Development for pigeond
+
+Currently we work with a hard-coded persistent network device. For testing, you can create and configure this device using the `ip` command:
 
     sudo ip tuntap add pigeon0 mode tap
     sudo ip link set pigeon0 up
@@ -16,13 +42,13 @@ Currently we work with a hard-coded persistent network device. It is best to cre
 
 Finally, run pigeond and it will connect to the pigeon0 device.
 
-### pigeon-admin
+### Installation
 
-NodeJS-based web server that displays status information and provides some tools to manage pigeond.
+Please install the Debian package, which includes a systemd init script for pigeond. Enable the pigeond service to run automatically:
 
-### System setup
+    sudo systemctl enable pigeond
 
-Please install the Debian package, which includes a systemd init script for pigeond. Unfortunately, the rest of the configuration is manual...
+Unfortunately, the rest of the configuration is manual...
 
 First, we need to enable the BB-BONE-AUDI-02 and BB-I2CI capes at startup. Edit /etc/default/capemgr and add this line:
 
@@ -67,11 +93,21 @@ Reboot the device and it should behave like a layer 2 hub (with some quirks). Yo
 
 Note that our device will drop IPv6 frames as well as IP broadcast frames. These were too noisy for our carrier pigeons to manage. Some applications may behave unexpectedly as a result.
 
+## Debugging
+
+You can view a log for pigeond using journalctl:
+
+    sudo journalctl -u pigeond -f
+
+It is also useful to use tshark to watch the pigeon0 device:
+
+    sudo tshark -i pigeon0
+
 ### Monitoring devices
 
 Let's install udevil for its devmon tool. (This sucks, but trust me, the other options here are worse).
 
-    apt install udevil
+    sudo apt install udevil
 
 Now, create a service file for devmon at /etc/systemd/system/devmon.service:
 
@@ -87,8 +123,8 @@ Now, create a service file for devmon at /etc/systemd/system/devmon.service:
 
 Now start and enable it...
 
-    systemctl start devmon
-    systemctl enable devmon
+    sudo systemctl start devmon
+    sudo systemctl enable devmon
 
 ## Authors
 
