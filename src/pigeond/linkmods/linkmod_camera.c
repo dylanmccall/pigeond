@@ -55,7 +55,7 @@ bool linkmod_camera_tx_is_available() {
  * that says it is available.
  */
 bool linkmod_camera_rx_is_available() {
-	return true;
+	return getenv(CAMERA_ENABLED_VAR_NAME) != NULL;
 }
 
 /**
@@ -138,7 +138,7 @@ LongThreadResult _linkmod_camera_rx_thread_loop(LongThread *long_thread, void *d
 		}
 
 		//bar_code_read allocates memory in buffer
-		buffer_size = bar_code_read(buffer);
+		buffer_size = bar_code_read(&buffer);
 		if(buffer_size == 0) {
 			//We got bupkiss back from the camera, let the user know they need to try again
 			printf("Please take another image");

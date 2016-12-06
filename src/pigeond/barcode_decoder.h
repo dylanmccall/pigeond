@@ -2,6 +2,6 @@
 #ifndef _BARCODE_DECODER_H
 #define _BARCODE_DECODER_H
 
-size_t bar_code_read(unsigned char *buffer);
+size_t bar_code_read(unsigned char **buffer);
 
 #endif
