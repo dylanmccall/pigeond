@@ -1,5 +1,5 @@
 .PHONY: default
-default: export
+default: all
 
 .PHONY: all
 all: build.all

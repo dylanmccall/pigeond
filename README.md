@@ -1,10 +1,12 @@
-# Ethernet Modem for IP Over Avian Carriers
+# Ethernet modem for IP Over Avian Carriers
 
-Created for CMPT 433, and based loosely on RFC 1149.
+This provides a simple virtual network device to transmit and receive ethernet packets, encoded as QR codes, using carrier pigeons. With some additional hardware and network configuration, it can be used to implement [RFC 1149](https://tools.ietf.org/html/rfc1149) on a Linux system. We used a BeagleBone Green along with a [thermal receipt printer](https://www.adafruit.com/product/597) from Adafruit and a Linux-compatible webcam. It is also possible to use ordinary USB flash drives, so the project can run happily on an ordinary Linux system.
+
+It was created for CMPT 433 at Simon Fraser University. If you can find your way around my sleep-deprived code and coax this project into working, you are amazing.
 
 ## Building pigeond
 
-The pigeond program opens a "pigeon0" network device using the tun/tap interface. It sends and receives data over this device using the IP Over Avian Carrier Protocol.
+The pigeond program opens a "pigeon0" network device using the tun/tap interface. It sends and receives data over this device using the IP Over Avian Carrier Protocol. Bridging to a physical network device happens externally.
 
 To build on Ubuntu, you will need to install some dependencies:
 
@@ -12,15 +14,15 @@ To build on Ubuntu, you will need to install some dependencies:
 
 Note that equivalent armhf libraries and header files (to cross-compile for BeagleBone) are included for your convenience.
 
-To build for armhf and copy the resulting binary to ~/cmpt433/public/myApps:
+To build for all architectures:
 
     make
 
-To build for all architectures:
+The output will be located in ./our/default/ and ./out/armhf/. Use "build.default" or "build.armhf" for all to build for a specific architecture.
 
-    make build.all
+To build for armhf and copy the resulting binary to ${HOME}/Public:
 
-The output will be located in ./our/default/ and ./out/armhf/. Substitute "default" or "armhf" for all to build for a specific architecture.
+    make export
 
 To remove build output:
 
@@ -30,7 +32,7 @@ To create a Debian package for the current architecture, which can be installed 
 
     dpkg-buildpackage -b -uc -us
 
-This is the recommended way to install pigeond, along with its systemd service configuration, so it can be used as a system service.
+This is the recommended way to install pigeond, along with its system configuration, so it can be used as a system service.
 
 ## Development for pigeond
 
@@ -44,7 +46,7 @@ Finally, run pigeond and it will connect to the pigeon0 device.
 
 ### Installation
 
-Please install the Debian package, which includes a systemd init script for pigeond. Enable the pigeond service to run automatically:
+Please install the Debian package, which includes a systemd service file for pigeond. Enable the pigeond service to run automatically:
 
     sudo systemctl enable pigeond
 
@@ -103,7 +105,9 @@ It is also useful to use tshark to watch the pigeon0 device:
 
     sudo tshark -i pigeon0
 
-### Monitoring devices
+### Auto-mounting flash drives (BeagleBone)
+
+By default, BeagleBone's operating system doesn't have a way of mounting storage devices when they are inserted. If you are already running a system that automatically mounts disks in a reliable way, you don't need to do this.
 
 Let's install udevil for its devmon tool. (This sucks, but trust me, the other options here are worse).
 

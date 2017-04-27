@@ -42,7 +42,7 @@ DATA ?= ./data
 OUT ?= ./out
 BUILD ?= ./build
 
-EXPORT_DIR_armhf ?= $(HOME)/cmpt433/public/myApps
+EXPORT_DIR_armhf ?= $(HOME)/Public
 SEND_SSH_armhf ?= root@dmccall-beagle.local
 
 MAKE ?= make
