@@ -41,7 +41,7 @@ char *path_join(const char *path1, size_t path1_length, const char *path2, size_
 
 	path_str = calloc(path1_length + 1 + path2_length, sizeof(*path_str));
 	strncat(path_str, path1, path1_length);
-	strncat(path_str, "/", 1);
+	strncat(path_str, "/", 2);
 	strncat(path_str, path2, path2_length);
 
 	return path_str;
